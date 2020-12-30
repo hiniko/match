@@ -1,25 +1,30 @@
 export interface NumberTileConfig{
-    scene: Phaser.Scene
-    value: integer 
-    spriteKey: string
+    scene : Phaser.Scene
+    value : integer 
+    spriteKey : string
+    spriteFrame: string 
+    dataIndex : integer
 }
 
-export default class NumberTile {
+export default class NumberTile extends Phaser.GameObjects.GameObject {
 
     config : NumberTileConfig
     container: Phaser.GameObjects.Container
     sprite: Phaser.GameObjects.Sprite
     text: Phaser.GameObjects.Text
+    selected: Boolean
 
     constructor(config: NumberTileConfig) {
+        super(config.scene, "Number Tile " + config.dataIndex)
 
         this.config = config
 
         this.sprite = config.scene.make.sprite({ 
             key: config.spriteKey,
+            frame: config.spriteFrame
         });
 
-        this.text = new Phaser.GameObjects.Text(config.scene,-8,-12, config.value.toString(),{ 
+        this.text = new Phaser.GameObjects.Text(config.scene, 0, 0, config.value.toString(),{ 
             fontFamily: "NunitoExtraBold", 
             fontSize: "24px",
             shadow: {
@@ -30,20 +35,33 @@ export default class NumberTile {
             }
         });
 
+        this.text.setOrigin(0.5)
+
         this.text.setText(this.config.value.toString())
         this.container = config.scene.make.container({})
         this.container.setSize(64,64)
-        this.container.setInteractive().on('pointerdown', function(pointer, localX, localY, event){
-            console.log(pointer, localX, localY, event )
-            console.log("OMG you just clicked " + this.config.value)
-        }, this);
-    
+
+        this.container.setInteractive().on('pointerdown', this.onClick, this);
 
         this.container.add(this.sprite)
         this.container.add(this.text)
         this.container.sendToBack(this.sprite)
+    }
 
+    onClick(pointer, localX, localY, event) {
+        this.setSelected()
+        let val = this.emit("tileClicked", this)
+        console.log(val)
+    }
 
+    setSelected(){
+        this.selected = !this.selected
+
+        if(this.selected) {
+            this.sprite.setFrame("tileHilight")
+        }else{
+            this.sprite.setFrame(this.config.spriteFrame)
+        }
     }
 
     setPosition(x: integer, y: integer) {
