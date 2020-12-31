@@ -1,7 +1,5 @@
 import GameBoard from "../lib/GameBoard"
-import NumberTile from "../lib/NumberTile"
-
-import game from "../game"
+import GameBoardDisplay from "../lib/GameBoardDisplay"
 
 // const tileColorA : number = 0x265473;
 // const tileColorB : number = 0xEF476F;
@@ -43,6 +41,7 @@ const tilePadding : integer = 4
 export default class NumbersGame extends Phaser.Scene {
 
     private board: GameBoard;
+    private boardDisplay: GameBoardDisplay
 
     constructor ()
     {
@@ -115,61 +114,36 @@ export default class NumbersGame extends Phaser.Scene {
 
     create ()
     {            
-
         this.board = new GameBoard({
              scene: this, 
              width: 6, 
              height: 6, 
              startingMaxValue: 10
-        });
+        })
 
+        this.boardDisplay = new GameBoardDisplay({
+          scene: this,
+          spriteKey: "tilesSpritesheet",
+          spriteFrameCount: 5,
+          tileWidth: tileWidth,
+          tileHeight: tileHeight,
+          tilePadding: tilePadding,
+          gameBoard: this.board,
+         })
 
-        this.events.on("pointerdown", this.board.onTileSelected)
+        this.boardDisplay.setPosition(100, 300);
+        this.boardDisplay.createBoard()
 
-        this.board.setInteractive()
+        let spaceKey = this.input.keyboard.addKey("Space")
+        spaceKey.on('down', this.board.onTileAcceptSelection, this.board)
 
-        this.add.existing(this.board)
+        //this.add.existing(this.board)
+        this.add.existing(this.boardDisplay.container)
 
-        this.board.popluate()
-
-        let tiles : NumberTile[] = []
-        let tileContainer = this.add.container()
-        let x = 0
-        let y = 0
 
         // create all of the number tiles for the board
-        for(var i=0; i<this.board.boardSize; i++){
+        
 
-            let newRow = (i % (this.board.boardSize / this.board.config.height)) == 0
-
-            if(newRow) {
-                x = 100;
-                y += tileHeight + tilePadding
-            }
-
-            let tile = new NumberTile({
-                scene: this, 
-                value:  this.board.boardData[i],
-                spriteKey: "tilesSpritesheet",
-                spriteFrame: "tile" + Math.floor(Math.random() * randomTileColorSize),
-                dataIndex: i
-            });
-
-            tile.setPosition(x,y)
-            x += tileWidth + tilePadding
-            tiles.push(tile)
-            tileContainer.add(tile.container)
-        }
-
-        tileContainer.setPosition(0, 300)
-
-        this.events.on("tileClicked", () => { 
-            console.log("I was emitted from scene!")
-        }) 
-
-        this.board.on("tileClicked", () => { 
-            console.log("I was emitted from scene but form boards listening!")
-        }) 
     //     this.add.shader('RGB Shift Field', 0, 0, 800, 600).setOrigin(0);
     //     this.add.image(400, 300, 'libs');
 

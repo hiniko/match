@@ -1,3 +1,5 @@
+import GameEvents from "./Events"
+
 export interface NumberTileConfig{
     scene : Phaser.Scene
     value : integer 
@@ -7,6 +9,11 @@ export interface NumberTileConfig{
 }
 
 export default class NumberTile extends Phaser.GameObjects.GameObject {
+
+    static NORMAL = 0
+    static VALID = 2
+    static INVALID = 3
+    static ACCEPTED = 4
 
     config : NumberTileConfig
     container: Phaser.GameObjects.Container
@@ -19,49 +26,93 @@ export default class NumberTile extends Phaser.GameObjects.GameObject {
 
         this.config = config
 
-        this.sprite = config.scene.make.sprite({ 
-            key: config.spriteKey,
-            frame: config.spriteFrame
-        });
+        let evts = GameEvents.get()
+        evts.on(GameEvents.TILE_INVALID_SELECTION, this.onInvalidSelection, this)
+        evts.on(GameEvents.TILE_VALID_SELECTION, this.onValidSelection, this)
+        evts.on(GameEvents.TILE_DESELECTION, this.onDeselection, this)
+        evts.on(GameEvents.TILE_ACCEPT_SELECTION, this.onAccepted, this)
 
-        this.text = new Phaser.GameObjects.Text(config.scene, 0, 0, config.value.toString(),{ 
-            fontFamily: "NunitoExtraBold", 
-            fontSize: "24px",
-            shadow: {
-                offsetX: 2,
-                offsetY: 2, 
-                color: "#000000",
-                fill: true
-            }
-        });
+        this.setState(NumberTile.NORMAL)
+    }
 
-        this.text.setOrigin(0.5)
-
-        this.text.setText(this.config.value.toString())
-        this.container = config.scene.make.container({})
-        this.container.setSize(64,64)
-
-        this.container.setInteractive().on('pointerdown', this.onClick, this);
-
-        this.container.add(this.sprite)
-        this.container.add(this.text)
-        this.container.sendToBack(this.sprite)
+    onAccepted(dataIdx: integer, delayMultiplier: integer = 0) {
+      if(dataIdx == this.config.dataIndex) {
+        this.setState(NumberTile.ACCEPTED)  
+        this.scene.tweens.add({
+          targets: [this.sprite, this.text],
+          alpha: { from: 1, to: 0},
+          scale: {from: 1, to: 0},
+          ease: 'Back.easeInOut',       // 'Cubic', 'Elastic', 'Bounce', 'Back'
+          duration: 250,
+          repeat: 0,            // -1: infinity
+          yoyo: false,
+          delay: 50 * delayMultiplier, 
+        })
+        return;
+      }
     }
 
     onClick(pointer, localX, localY, event) {
-        this.setSelected()
-        let val = this.emit("tileClicked", this)
-        console.log(val)
+      let val = GameEvents.get().emit(GameEvents.TILE_CLICKED, this.config.dataIndex)
     }
 
-    setSelected(){
-        this.selected = !this.selected
-
-        if(this.selected) {
-            this.sprite.setFrame("tileHilight")
-        }else{
+    onDeselection(dataIdx: integer, delayMultiplier: integer = 0) {
+      if(dataIdx == this.config.dataIndex) {
+        this.setState(NumberTile.NORMAL)
+        this.scene.tweens.add({
+          targets: [this.sprite, this.text],
+          alpha: { from: 1, to: 0.85 },
+          scale: {from: 1, to: 0.9},
+          ease: 'Back.easeInOut',       // 'Cubic', 'Elastic', 'Bounce', 'Back'
+          duration: 250,
+          repeat: 0,            // -1: infinity
+          yoyo: true,
+          callbackScope: this,
+          delay: 50 * delayMultiplier, 
+          onComplete: () => {
             this.sprite.setFrame(this.config.spriteFrame)
-        }
+          }
+        })
+        return;
+      }
+    }
+
+    onValidSelection(dataIdx: integer) {
+      if(dataIdx == this.config.dataIndex) {
+        this.setState(NumberTile.VALID)
+        this.sprite.setFrame("tileHilight")
+        this.scene.tweens.add({
+          targets: [this.sprite, this.text],
+          scale: { from: 1, to: 1.1 },
+          ease: 'Back.easeInOut',       // 'Cubic', 'Elastic', 'Bounce', 'Back'
+          duration: 250,
+          repeat: 0,            // -1: infinity
+          yoyo: true,
+          callbackScope: this, 
+        })
+        return;
+      }
+    }
+
+    onInvalidSelection(dataIdx: integer) {
+      if(dataIdx == this.config.dataIndex) {
+        this.setState(NumberTile.INVALID)
+        this.sprite.setFrame("tileError")
+        this.scene.tweens.add({
+          targets: [this.sprite, this.text],
+          alpha: { from: 1, to: 0.85 },
+          angle: {from: 0, to: 25},
+          ease: 'Back.easeInOut',       // 'Cubic', 'Elastic', 'Bounce', 'Back'
+          duration: 250,
+          repeat: 0,            // -1: infinity
+          yoyo: true,
+          callbackScope: this,
+          onComplete: () => {
+            GameEvents.get().emit(GameEvents.TILE_DESELECTION, dataIdx)
+          }
+      })
+        return;
+      }
     }
 
     setPosition(x: integer, y: integer) {
