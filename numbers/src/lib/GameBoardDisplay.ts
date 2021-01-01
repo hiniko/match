@@ -13,7 +13,9 @@ export interface GameBoardDisplayConfig {
 }
 
 export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
+
   config: GameBoardDisplayConfig;
+  events: GameEvents
   scene: Phaser.Scene;
   group: Phaser.GameObjects.Group;
   board: GameBoard;
@@ -23,6 +25,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     super(config.scene, "GameBoardDisplay for " + config.gameBoard.name);
 
     this.config = config;
+    this.events = GameEvents.get()
     this.group = new Phaser.GameObjects.Group(this.scene);
     this.container = new Phaser.GameObjects.Container(this.scene);
 
@@ -45,6 +48,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         spriteKey: this.config.spriteKey,
         tileWidth: this.config.tileWidth,
         tileHeight: this.config.tileHeight,
+        tilePadding: this.config.tilePadding,
         value: 0
       });
 

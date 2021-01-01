@@ -9,6 +9,7 @@ interface TileConfig {
   active: boolean;
   tileWidth: integer;
   tileHeight: integer;
+  tilePadding: integer; 
   value: integer;
 }
 
@@ -62,6 +63,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.events.on(GameEvents.TILE_VALID_SELECTION, this.onValidSelection, this);
     this.events.on(GameEvents.TILE_DESELECTION, this.onDeselection, this);
     this.events.on(GameEvents.TILE_ACCEPT_SELECTION, this.onAccepted, this);
+    this.events.on(GameEvents.TILE_DROPPED, this.onTileDropped, this)
   }
 
   randomSpriteFrame(): string {
@@ -100,6 +102,27 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     }
   }
 
+  onTileDropped(row: integer, col: integer, oldboardIndex: integer, newBoardIndex: integer, dropCount: integer) {
+    if(oldboardIndex != this.config.boardIndex)
+      return 
+
+    this.config.boardIndex = newBoardIndex
+
+    // let newY = this.container.y + (this.config.tileHeight + (this.config.tilePadding * dropCount)) * dropCount 
+     let newY = this.container.y + (this.config.tileHeight + this.config.tilePadding) * dropCount 
+
+    this.scene.tweens.add({
+        targets: [this.container],
+        y: { from: this.container.y, to: newY},
+        ease: "Bounce.easeInOut",
+        duration: 500,
+        repeat: 0,
+        yoyo: false,
+        //delay: 50 * delayMultiplier,
+      });
+
+  }
+
   onTileClicked(pointer, localX, localY, event) {
     GameEvents.get().emit(GameEvents.TILE_CLICKED, this.config.boardIndex);
   }
@@ -109,7 +132,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
       console.log("tile was accepted")
       //this.setState(Tile.ACCEPTED)
       this.scene.tweens.add({
-        targets: [this.sprite, this.text],
+        targets: [this.container],
         alpha: { from: 1, to: 0 },
         scale: { from: 1, to: 0 },
         ease: "Back.easeInOut",
@@ -137,7 +160,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     if (dataIdx == this.config.boardIndex) {
       // this.setState(Tile.NORMAL)
       this.scene.tweens.add({
-        targets: [this.sprite, this.text],
+        targets: [this.container],
         alpha: { from: 1, to: 0.85 },
         scale: { from: 1, to: 0.9 },
         ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'
@@ -159,7 +182,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
       // this.setState(Tile.VALID)
       this.sprite.setFrame("tileHilight");
       this.scene.tweens.add({
-        targets: [this.sprite, this.text],
+        targets: [this.container],
         scale: { from: 1, to: 1.1 },
         ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'
         duration: 250,
@@ -176,7 +199,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
       // this.setState(Tile.INVALID)
       this.sprite.setFrame("tileError");
       this.scene.tweens.add({
-        targets: [this.sprite, this.text],
+        targets: [this.container],
         alpha: { from: 1, to: 0.85 },
         angle: { from: 0, to: 25 },
         ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'

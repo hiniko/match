@@ -63,8 +63,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
       console.log(this.boardData)
 
-      // Iterate through board and tag which tiles need to move down 
-
+      // Iterate backbwards through board moving tiles with gaps under them down
       for(let i=this.boardSize -1; i>-1; i--) {
 
         let dataIdx = i
@@ -97,12 +96,15 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
         let nextBelowIdx = belowIdx
         console.log("belowidx : " + belowIdx)
         while(true) {
-          // if there is a space 
+
+          // TODO Check off board below drop count increase?
+
+          // if there is a gap, mark it 
           if(this.boardData[nextBelowIdx] == null) dropCount++
           else break
 
           // if the new next below index is greater than the board or the next space isn't null
-          if(nextBelowIdx + this.config.height > this.boardSize || this.boardData[nextBelowIdx + this.config.height] != null) 
+          if(nextBelowIdx + this.config.height >= this.boardSize || this.boardData[nextBelowIdx + this.config.height] != null) 
             break
 
           // increment the nextBelow index
@@ -112,8 +114,10 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
         console.log("final next below idx: " + nextBelowIdx)
         console.log("Dropped: " + dropCount + " times")
 
+
         this.boardData[nextBelowIdx] = this.boardData[i]
         this.boardData[i] = null
+        this.events.emit(GameEvents.TILE_DROPPED, row, col, i, nextBelowIdx, dropCount)
         console.log("tile at " + row + ":" + col + " needs to move down " + dropCount  + " Spaces")
       }
 
