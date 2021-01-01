@@ -56,11 +56,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
 
     this.container
       .setInteractive()
-      .on(
-        Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN,
-        this.onTileClicked,
-        this
-      );
+      
 
     this.events.on(GameEvents.TILE_INVALID_SELECTION, this.onInvalidSelection, this);
     this.events.on(GameEvents.TILE_VALID_SELECTION, this.onValidSelection, this);
@@ -73,15 +69,35 @@ export default class Tile extends Phaser.GameObjects.GameObject {
   }
 
   reset(x: integer, y: integer, boardIndex: integer, value: integer) {
+    this.setEnabled(true)
     this.config.boardIndex = boardIndex;
     this.config.value = value;
     this.container.setPosition(x, y);
-    this.setActive(true);
     this.text.setText(value.toString());
   }
 
   setPosition(x: integer, y: integer) {
     this.container.setPosition(x, y, 0, 0);
+  }
+
+  setEnabled(enabled: boolean) {
+    if(enabled) {
+      this.container.setInteractive(true).on(
+        Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN,
+        this.onTileClicked,
+        this
+      );
+      this.setActive(true)
+      this.sprite.setActive(true)
+      this.text.setActive(true)
+      
+    }else{
+      this.container.setInteractive(false)
+        .removeAllListeners()
+      this.setActive(false)
+      this.sprite.setActive(false)
+      this.text.setActive(false)
+    }
   }
 
   onTileClicked(pointer, localX, localY, event) {
@@ -90,16 +106,21 @@ export default class Tile extends Phaser.GameObjects.GameObject {
 
   onAccepted(dataIdx: integer, delayMultiplier: integer = 0) {
     if (dataIdx == this.config.boardIndex) {
+      console.log("tile was accepted")
       //this.setState(Tile.ACCEPTED)
       this.scene.tweens.add({
         targets: [this.sprite, this.text],
         alpha: { from: 1, to: 0 },
         scale: { from: 1, to: 0 },
-        ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'
+        ease: "Back.easeInOut",
         duration: 250,
-        repeat: 0, // -1: infinity
+        repeat: 0,
         yoyo: false,
         delay: 50 * delayMultiplier,
+        callbackScope: this,
+        onComplete: () => {
+          this.setEnabled(false);
+        }
       });
       return;
     }

@@ -44,22 +44,97 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
       console.log("Checking selection")
 
-      //TODO Some logic here to ensure that it went write
+      //TODO Some logic here to ensure that it went right
 
 
+      // Find out which tiles need to move and by how many 
+
+      console.log(this.boardData)
+
+      // Emit the tiles have been selected
       this.selectedTiles.forEach((dataIdx: integer, selIdx: integer)  => {
-        console.log("removing " + dataIdx)
-        this.boardData[dataIdx] = this.getRandomValue();
         this.events.emit(GameEvents.TILE_ACCEPT_SELECTION, dataIdx, selIdx)
       });
+
+      // Find which columns need to move
+      this.selectedTiles.forEach((dataIdx: integer) => {
+        this.boardData[dataIdx] = null
+      })
+
+      console.log(this.boardData)
+
+      // Iterate through board and tag which tiles need to move down 
+
+      for(let i=this.boardSize -1; i>-1; i--) {
+
+        let dataIdx = i
+
+        if(this.boardData[i] == null) {
+          console.log("idx " + i + " is null, skipping")
+          continue
+        }
+
+        let row = this.getRow(i)
+        let col = this.getCol(i)
+        let belowIdx = i + this.config.height
+
+        console.log("Checking " + row + ":" + col + " at idx " + i)
+
+        // Skip if this is the bottom row
+        if(row == this.config.height -1){
+          console.log("idx " + i + " is on the bottom row, skipping")
+          continue
+        }
+
+        // skip if the row below has a tile
+        if(this.boardData[belowIdx] != null) {
+          console.log("idx " + i + " has a tile below it, skipping")
+          continue
+        }
+
+        // the row below does not have a tile, work how may spaces it needs to mvoe down 
+        let dropCount = 0
+        let nextBelowIdx = belowIdx
+        console.log("belowidx : " + belowIdx)
+        while(true) {
+          // if there is a space 
+          if(this.boardData[nextBelowIdx] == null) dropCount++
+          else break
+
+          // if the new next below index is greater than the board or the next space isn't null
+          if(nextBelowIdx + this.config.height > this.boardSize || this.boardData[nextBelowIdx + this.config.height] != null) 
+            break
+
+          // increment the nextBelow index
+          nextBelowIdx = nextBelowIdx + this.config.height 
+        }
+
+        console.log("final next below idx: " + nextBelowIdx)
+        console.log("Dropped: " + dropCount + " times")
+
+        this.boardData[nextBelowIdx] = this.boardData[i]
+        this.boardData[i] = null
+        console.log("tile at " + row + ":" + col + " needs to move down " + dropCount  + " Spaces")
+      }
+
+      console.log(this.boardData)
 
       this.selectedTiles.length = 0
     }
 
+    getRow(dataIdx: integer): integer {
+      return Math.floor(dataIdx / this.config.width)
+
+    }
+
+    getCol(dataIdx: integer): integer {
+      return dataIdx % Math.floor(this.boardSize / this.config.height)
+    }
+
     onTileSelected(dataIdx) {
-          // Get the row and column of the tile in the array 
-          let row = Math.floor(dataIdx / this.config.width)
-          let col = dataIdx % (this.boardSize / this.config.height)
+
+          let row = this.getRow(dataIdx)
+          let col = this.getCol(dataIdx)
 
           // check if this is a valid selection
           if(this.selectedTiles.length == 0) {
