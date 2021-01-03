@@ -125,7 +125,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
   // }
 
   onTileClicked(pointer, localX, localY, event) {
-    GameEvents.get().emit(GameEvents.TILE_CLICKED, this.config.boardIndex);
+    GameEvents.get().emit(GameEvents.BOARD_TILE_CLICKED, this.config.boardIndex);
   }
 
 }

@@ -134,9 +134,6 @@ export default class NumbersGame extends Phaser.Scene {
         this.boardDisplay.setPosition(100, 300);
         this.boardDisplay.createBoard()
 
-        let spaceKey = this.input.keyboard.addKey("Space")
-        spaceKey.on('down', this.board.onTileAcceptSelection, this.board)
-
         //this.add.existing(this.board)
         this.add.existing(this.boardDisplay.container)
 

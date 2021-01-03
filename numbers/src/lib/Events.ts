@@ -9,14 +9,21 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
     return GameEvents.instance
   }
 
-  static TILE_CLICKED = "tileClicked"
-  static TILE_VALID_SELECTION = "tileValidSelection"
-  static TILE_INVALID_SELECTION = "tileInvalidSelection"
-  static TILE_DESELECTION = "tileDeselection"
-  static TILE_ACCEPT_SELECTION = "tileAcceptSelection"
-  static TILE_REMOVE_SELECTION = "tileRemoveSelection"
-  static TILE_DROPPED = "tileDropped"
+  emit(event: string | symbol, ...args: any[]): boolean{
+    console.log("emitted " + event.toString())
+    return super.emit(event, ...args)
+  }
 
-  static BOARD_NEW_ANIMATIONS = "newAnimations"
+  static LOGIC_UPDATE_SELECTION = "logicUpdateSelection"
+  static LOGIC_UNSELECTION = "logicUnselection"
+  static LOGIC_VALID_SELECTION = "logicValidSelection"
+  static LOGIC_INVALID_SELECTION = "logicInvalidSelection"
+  static LOGIC_BOARD_UPDATED = "logicTilesUpdated"
+  static LOGIC_ACCEPT_SELECTION = "logicAcceptSelection"
+  static LOGIC_CLEAR_SELECTION = "logicClearSelection"
+
+  static BOARD_TILE_CLICKED = "boardTileClicked"
+  static BOARD_UPDATE_ANIMATIONS = "boardUpdateAnimations"
+  static BOARD_ACCEPT_SELECTION = "boardUpdateSelection"
 
 }

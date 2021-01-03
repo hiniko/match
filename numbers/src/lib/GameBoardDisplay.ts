@@ -12,13 +12,13 @@ export interface GameBoardDisplayConfig {
   tilePadding: integer;
 }
 
-interface TileDrop {
-  dataIndex: integer;
-  to: integer;
+interface AnimationSlot {
+  blocking: boolean
+  tweens : Phaser.Types.Tweens.TweenBuilderConfig[]
 }
 
 const UPDATING = "updating";
-const IDLE = "idle"
+const IDLE = "idle";
 
 export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   config: GameBoardDisplayConfig;
@@ -31,7 +31,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   container: Phaser.GameObjects.Container;
 
   animLockCount: integer = 0;
-  // Really, anim queue needs Phaser.Types.Tweens.TweenBuilderConfig[][] however the builders 
+  // Really, anim queue needs Phaser.Types.Tweens.TweenBuilderConfig[][] however the builders
   // in phaser scan for properties in the object, which is fine in JS but not TS;
   animQueue = [];
 
@@ -44,29 +44,43 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.container = new Phaser.GameObjects.Container(this.scene);
     this.timeline = this.scene.tweens.createTimeline();
 
-    this.events.on( GameEvents.TILE_INVALID_SELECTION,
-      this.onInvalidSelection,
-      this
-    );
-    this.events.on(
-      GameEvents.TILE_VALID_SELECTION,
-      this.onValidSelection,
-      this
-    );
-    this.events.on(GameEvents.TILE_DESELECTION, this.onDeselection, this);
-    this.events.on(GameEvents.TILE_ACCEPT_SELECTION, this.onAccepted, this);
-    this.events.on(GameEvents.TILE_DROPPED, this.onTileDropped, this);
-    this.events.on(GameEvents.BOARD_NEW_ANIMATIONS, this.checkAnimations, this)
+    this.events.on(GameEvents.LOGIC_INVALID_SELECTION, this.onInvalidSelection, this);
+    this.events.on(GameEvents.LOGIC_VALID_SELECTION, this.onValidSelection, this);
+    this.events.on(GameEvents.LOGIC_UNSELECTION, this.onUnselection, this);
+    this.events.on(GameEvents.LOGIC_BOARD_UPDATED, this.onBoardUpdated, this);
+    this.events.on(GameEvents.LOGIC_CLEAR_SELECTION, this.onClearSelection, this);
+
+    this.events.on(GameEvents.BOARD_UPDATE_ANIMATIONS, this.checkAnimations, this);
+    this.events.on(GameEvents.BOARD_TILE_CLICKED, this.onTileClicked, this)
+
+    let spaceKey = this.scene.input.keyboard.addKey("Space")
+    spaceKey.on('down', this.onSpaceKeyDown, this)
 
     this.createTiles();
-    this.setState(IDLE)
+    this.setState(IDLE);
+  }
+
+  onSpaceKeyDown() {
+    if(this.state != IDLE) return
+    this.setState(UPDATING)
+    this.events.emit(GameEvents.LOGIC_ACCEPT_SELECTION)
+  }
+
+  onTileClicked(boardIdx: integer) {
+    console.log(this.state)
+    console.log(this.animQueue)
+    this.checkAnimations()
+    if(this.state != IDLE) return
+    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
   private createTiles() {
     console.log("Generating Tiles...");
     for (
       let i = 0;
-      i < this.config.gameBoard.boardSize + Math.floor(this.config.gameBoard.boardSize / 2);
+      i <
+      this.config.gameBoard.boardSize +
+        Math.floor(this.config.gameBoard.boardSize / 2);
       i++
     ) {
       let tile = new Tile({
@@ -126,38 +140,38 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     return tile;
   }
 
-  enqueueAnim(tweens) {
-    if(!Array.isArray(tweens)) {
-      this.animQueue.push([tweens])
-    }else {
-      this.animQueue.push(tweens)
-    }
-    this.events.emit(GameEvents.BOARD_NEW_ANIMATIONS, this.checkAnimations)
+  enqueueAnim(slot: AnimationSlot) {
+    this.animQueue.push(slot)
+    this.events.emit(GameEvents.BOARD_UPDATE_ANIMATIONS, this.checkAnimations);
   }
 
   checkAnimations() {
-    if (this.animQueue.length > 0 && this.animLockCount == 0) {
-      this.setState(UPDATING)
-      let tweens = this.animQueue.pop();
-      this.animLockCount = tweens.length;
-      tweens.forEach((tween: Phaser.Types.Tweens.TweenBuilderConfig) => {
+    if(this.animLockCount > 0) return
+    else this.setState(IDLE);
+
+    if (this.animQueue.length > 0) {
+      let slot = this.animQueue.pop();
+
+      if(slot.blocking)
+        this.setState(UPDATING);
+
+      this.animLockCount = slot.tweens.length;
+
+      slot.tweens.forEach((tween: Phaser.Types.Tweens.TweenBuilderConfig) => {
         // wrap the orignal call back in order to manage animLock count on complete
         let complete = tween.onComplete;
-        tween.onComplete = (
-          tween: Phaser.Tweens.Tween,
-          targets: any[],
-          ...param: any[]
-        ) => {
-          if (complete) {
+        tween.onComplete = ( tween: Phaser.Tweens.Tween, targets: any[], ...param: any[]) => {
+          if (complete) 
             complete(tween, targets, param);
-          }
+
           this.animLockCount--;
-          this.events.emit(GameEvents.BOARD_NEW_ANIMATIONS, this.checkAnimations)
+          this.events.emit(
+            GameEvents.BOARD_UPDATE_ANIMATIONS,
+            this.checkAnimations
+          );
         };
         this.scene.tweens.add(tween);
       });
-    }else{
-      this.setState(IDLE)
     }
   }
 
@@ -165,89 +179,88 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
    * Event Handlers
    */
 
-  onTileDropped(dropData: integer[][]) {
-    console.log("----- TILES DROPPED -----")
-    console.log(dropData)
-    console.log(this.tiles)
-    console.log(this.tiles.map((tile) => tile?.config.value))
-    console.log(this.tiles.map((tile) => tile?.config.boardIndex))
+  onBoardUpdated(dropData: integer[][]) {
 
-    let tweens = []
-    console.log("--- DOING TRANSFROM ---")
-    for(let i=0; i< dropData.length; i++ ){
+    let slot: AnimationSlot = {
+      blocking: true,
+      tweens: []
+    }
 
-      let oldBoardIndex = dropData[i][0]
-      let newBoardIndex = dropData[i][1]
-      let dropCount = dropData[i][2]
+    for (let i = 0; i < dropData.length; i++) {
+      let oldBoardIndex = dropData[i][0];
+      let newBoardIndex = dropData[i][1];
+      let dropCount = dropData[i][2];
 
-      if(newBoardIndex == null) {
-        this.tiles[oldBoardIndex].setEnabled(false)
-        this.tiles[oldBoardIndex] = null
-        console.log(dropData[i])
-        continue
+      if (newBoardIndex == null) {
+        this.tiles[oldBoardIndex].setEnabled(false);
+        this.tiles[oldBoardIndex] = null;
+        console.log(dropData[i]);
+        continue;
       }
-       
-      console.log(dropData[i])
 
       // Update Tile
-      let tile = this.tiles[oldBoardIndex]
-      this.tiles[newBoardIndex] = tile 
-      tile.config.boardIndex = newBoardIndex
-      this.tiles[oldBoardIndex] = null
-
-      // Move tiles in array
-
-      let newY =
-        tile.container.y + (this.config.tileHeight + this.config.tilePadding) * dropCount;
+      let tile = this.tiles[oldBoardIndex];
+      this.tiles[newBoardIndex] = tile;
+      tile.config.boardIndex = newBoardIndex;
+      this.tiles[oldBoardIndex] = null;
 
       // Queue a remove tween for the tile
-      tweens.push({
+      let newY =
+        tile.container.y +
+        (this.config.tileHeight + this.config.tilePadding) * dropCount;
+
+      let row = this.config.gameBoard.getRow(tile.config.boardIndex)
+      let duration = 500
+      let rowOffset = duration / this.config.gameBoard.config.width
+
+      slot.tweens.push({
         targets: this.tiles[newBoardIndex].container,
-        y: { from: this.tiles[newBoardIndex].container.y, to: newY },
-        ease: "Bounce.easeOutIn",
-        duration: 250,
+        props: {
+         y: { value: newY }
+        },
+        ease: "Bounce.easeOut",
+        delay: duration - (row * rowOffset),
+        duration: duration,
       });
     }
-    this.enqueueAnim(tweens)
-
-    console.log(this.tiles)
-    console.log(this.tiles.map((tile) => tile?.config.value))
-    console.log(this.tiles.map((tile) => tile?.config.boardIndex))
-    console.log("----- TILES DROPPED END-----")
+    this.enqueueAnim(slot);
   }
 
-  onAccepted(acceptedIdxs: integer[]) {
-    console.log("----- TILES ACCEPTED -----")
-    let tweens = []
+  onClearSelection(acceptedIdxs: integer[]) {
+    let slot = {
+      blocking: true,
+      tweens: []
+    }
     acceptedIdxs.forEach((dataIdx: integer, selIdx: integer) => {
       this.tiles[dataIdx].setEnabled(false);
-      tweens.push({
+      slot.tweens.push({
         targets: [this.tiles[dataIdx].container],
-        alpha: { from: 1, to: 0 },
-        scale: { from: 1, to: 0 },
+        props: {
+          alpha: { value: 0 },
+          scale: { from: 0 },
+        },
         ease: "Back.easeInOut",
         duration: 250,
         repeat: 0,
         yoyo: false,
         delay: 50 * selIdx,
-        callbackScope: this,
-        onStart: () => {
-          //this.tiles[dataIdx].setEnabled(false)
-          //this.tiles[dataIdx] = null
-        },
       });
-    })
-    this.enqueueAnim(tweens)
-    console.log("----- TILES ACCEPTED END -----")
+    });
+    this.enqueueAnim(slot);
   }
 
-  onDeselection(dataIdxs: integer[]) {
-    let tweenConfigs = [];
+  onUnselection(dataIdxs: integer[]) {
+    let slot: AnimationSlot = {
+      blocking: true,
+      tweens: []
+    }
     dataIdxs.forEach((dataIdx, idx) => {
-      tweenConfigs.push({
+      slot.tweens.push({
         targets: this.tiles[dataIdx].container,
-        alpha: { from: 1, to: 0.85 },
-        scale: { from: 1, to: 0.9 },
+        props: {
+          alpha: { value: 0.85 },
+          scale: { value: 0.9 },
+        },
         ease: "Back.easeInOut",
         duration: 250,
         delay: 50 * idx,
@@ -258,13 +271,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         },
       });
     });
-    this.enqueueAnim(tweenConfigs);
+    this.enqueueAnim(slot);
   }
 
   onValidSelection(dataIdx: integer) {
-    // if(this.state != IDLE)
-    //   return
-
     this.scene.tweens.add({
       targets: [this.tiles[dataIdx].container],
       scale: { from: 1, to: 1.1 },
@@ -280,9 +290,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onInvalidSelection(dataIdx: integer) {
-    // if(this.state != IDLE)
-    //   return
-
     this.scene.tweens.add({
       targets: [this.tiles[dataIdx].container],
       alpha: { from: 1, to: 0.85 },
