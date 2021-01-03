@@ -161,7 +161,7 @@ export default class NumbersGame extends Phaser.Scene {
 
 
     update() {
-
+      this.boardDisplay.update()
     }
 }
 

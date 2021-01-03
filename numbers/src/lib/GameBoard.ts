@@ -1,5 +1,4 @@
 import GameEvents from "./Events"
-import NumberTile from "./NumberTile"
 
 export interface GameBoardConfig {
     scene: Phaser.Scene
@@ -29,6 +28,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
         this.popluate()
 
         this.events.on(GameEvents.TILE_CLICKED, this.onTileSelected, this)
+        this.events.on(GameEvents.TILE_DESELECTION, this.onTileDeselection, this)
     }
 
     private popluate() {
@@ -40,25 +40,23 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
         }
     }
 
+
     onTileAcceptSelection() {
-
       console.log("Checking selection")
-
       //TODO Some logic here to ensure that it went right
-
-
       // Find out which tiles need to move and by how many 
-
       console.log(this.boardData)
 
       // Emit the tiles have been selected
-      this.selectedTiles.forEach((dataIdx: integer, selIdx: integer)  => {
-        this.events.emit(GameEvents.TILE_ACCEPT_SELECTION, dataIdx, selIdx)
-      });
+      this.events.emit(GameEvents.TILE_ACCEPT_SELECTION, this.selectedTiles)
+
+
+      let dropData = []
 
       // Find which columns need to move
       this.selectedTiles.forEach((dataIdx: integer) => {
         this.boardData[dataIdx] = null
+        dropData.push([dataIdx, null, null])
       })
 
       console.log(this.boardData)
@@ -97,8 +95,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
         console.log("belowidx : " + belowIdx)
         while(true) {
 
-          // TODO Check off board below drop count increase?
-
           // if there is a gap, mark it 
           if(this.boardData[nextBelowIdx] == null) dropCount++
           else break
@@ -117,12 +113,12 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
         this.boardData[nextBelowIdx] = this.boardData[i]
         this.boardData[i] = null
-        this.events.emit(GameEvents.TILE_DROPPED, row, col, i, nextBelowIdx, dropCount)
+        dropData.push([i, nextBelowIdx, dropCount])
         console.log("tile at " + row + ":" + col + " needs to move down " + dropCount  + " Spaces")
       }
 
       console.log(this.boardData)
-
+      this.events.emit(GameEvents.TILE_DROPPED, dropData)
       this.selectedTiles.length = 0
     }
 
@@ -135,7 +131,13 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
       return dataIdx % Math.floor(this.boardSize / this.config.height)
     }
 
+    onTileDeselection(dataIdx) {
+      let idx = this.selectedTiles.findIndex(dataIdx)
+      this.selectedTiles = this.selectedTiles.filter((v) => v != dataIdx)
+    }
+
     onTileSelected(dataIdx) {
+          console.log("tileSelected called")
 
           let row = this.getRow(dataIdx)
           let col = this.getCol(dataIdx)
@@ -150,9 +152,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
             let foundIdx = this.selectedTiles.findIndex((selIdx: integer) => selIdx == dataIdx) 
             if(foundIdx > -1) {
               // Add one to the found index to include the tile that was clicked on 
-              this.selectedTiles.splice(0, foundIdx + 1).forEach((curIdx: integer, selIdx: integer) => {
-                GameEvents.get().emit(GameEvents.TILE_DESELECTION, curIdx, selIdx)
-              })
+              GameEvents.get().emit(GameEvents.TILE_DESELECTION, this.selectedTiles.splice(0, foundIdx + 1))
               return 
             }
 
@@ -173,7 +173,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
             }
 
           }
-          console.log(row, col)
     }
 
     private getRandomValue() : integer {

@@ -17,4 +17,6 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
   static TILE_REMOVE_SELECTION = "tileRemoveSelection"
   static TILE_DROPPED = "tileDropped"
 
+  static BOARD_NEW_ANIMATIONS = "newAnimations"
+
 }

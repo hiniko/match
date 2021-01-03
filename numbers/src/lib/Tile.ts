@@ -57,13 +57,6 @@ export default class Tile extends Phaser.GameObjects.GameObject {
 
     this.container
       .setInteractive()
-      
-
-    this.events.on(GameEvents.TILE_INVALID_SELECTION, this.onInvalidSelection, this);
-    this.events.on(GameEvents.TILE_VALID_SELECTION, this.onValidSelection, this);
-    this.events.on(GameEvents.TILE_DESELECTION, this.onDeselection, this);
-    this.events.on(GameEvents.TILE_ACCEPT_SELECTION, this.onAccepted, this);
-    this.events.on(GameEvents.TILE_DROPPED, this.onTileDropped, this)
   }
 
   randomSpriteFrame(): string {
@@ -102,116 +95,37 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     }
   }
 
-  onTileDropped(row: integer, col: integer, oldboardIndex: integer, newBoardIndex: integer, dropCount: integer) {
-    if(oldboardIndex != this.config.boardIndex)
-      return 
-
-    this.config.boardIndex = newBoardIndex
-
-    // let newY = this.container.y + (this.config.tileHeight + (this.config.tilePadding * dropCount)) * dropCount 
-     let newY = this.container.y + (this.config.tileHeight + this.config.tilePadding) * dropCount 
-
-    this.scene.tweens.add({
-        targets: [this.container],
-        y: { from: this.container.y, to: newY},
-        ease: "Bounce.easeInOut",
-        duration: 500,
-        repeat: 0,
-        yoyo: false,
-        //delay: 50 * delayMultiplier,
-      });
-
+  resetFrame() {
+    this.sprite.setFrame(this.currentSpriteFrame);
   }
+
+  setFrame(frame: string) {
+    this.sprite.setFrame(frame)
+  }
+
+  // onTileDropped(row: integer, col: integer, oldboardIndex: integer, newBoardIndex: integer, dropCount: integer) {
+  //   if(oldboardIndex != this.config.boardIndex)
+  //     return 
+
+  //   this.config.boardIndex = newBoardIndex
+
+  //   // let newY = this.container.y + (this.config.tileHeight + (this.config.tilePadding * dropCount)) * dropCount 
+  //    let newY = this.container.y + (this.config.tileHeight + this.config.tilePadding) * dropCount 
+
+  //   this.scene.tweens.add({
+  //       targets: [this.container],
+  //       y: { from: this.container.y, to: newY},
+  //       ease: "Bounce.easeInOut",
+  //       duration: 500,
+  //       repeat: 0,
+  //       yoyo: false,
+  //       //delay: 50 * delayMultiplier,
+  //     });
+
+  // }
 
   onTileClicked(pointer, localX, localY, event) {
     GameEvents.get().emit(GameEvents.TILE_CLICKED, this.config.boardIndex);
   }
 
-  onAccepted(dataIdx: integer, delayMultiplier: integer = 0) {
-    if (dataIdx == this.config.boardIndex) {
-      console.log("tile was accepted")
-      //this.setState(Tile.ACCEPTED)
-      this.scene.tweens.add({
-        targets: [this.container],
-        alpha: { from: 1, to: 0 },
-        scale: { from: 1, to: 0 },
-        ease: "Back.easeInOut",
-        duration: 250,
-        repeat: 0,
-        yoyo: false,
-        delay: 50 * delayMultiplier,
-        callbackScope: this,
-        onComplete: () => {
-          this.setEnabled(false);
-        }
-      });
-      return;
-    }
-  }
-
-  onClick(pointer, localX, localY, event) {
-    let val = GameEvents.get().emit(
-      GameEvents.TILE_CLICKED,
-      this.config.boardIndex
-    );
-  }
-
-  onDeselection(dataIdx: integer, delayMultiplier: integer = 0) {
-    if (dataIdx == this.config.boardIndex) {
-      // this.setState(Tile.NORMAL)
-      this.scene.tweens.add({
-        targets: [this.container],
-        alpha: { from: 1, to: 0.85 },
-        scale: { from: 1, to: 0.9 },
-        ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'
-        duration: 200,
-        repeat: 0, // -1: infinity
-        yoyo: true,
-        callbackScope: this,
-        delay: 50 * delayMultiplier,
-        onComplete: () => {
-          this.sprite.setFrame(this.currentSpriteFrame);
-        },
-      });
-      return;
-    }
-  }
-
-  onValidSelection(dataIdx: integer) {
-    if (dataIdx == this.config.boardIndex) {
-      // this.setState(Tile.VALID)
-      this.sprite.setFrame("tileHilight");
-      this.scene.tweens.add({
-        targets: [this.container],
-        scale: { from: 1, to: 1.1 },
-        ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'
-        duration: 250,
-        repeat: 0, // -1: infinity
-        yoyo: true,
-        callbackScope: this,
-      });
-      return;
-    }
-  }
-
-  onInvalidSelection(dataIdx: integer) {
-    if (dataIdx == this.config.boardIndex) {
-      // this.setState(Tile.INVALID)
-      this.sprite.setFrame("tileError");
-      this.scene.tweens.add({
-        targets: [this.container],
-        alpha: { from: 1, to: 0.85 },
-        angle: { from: 0, to: 25 },
-        ease: "Back.easeInOut", // 'Cubic', 'Elastic', 'Bounce', 'Back'
-        duration: 250,
-        repeat: 0, // -1: infinity
-        yoyo: true,
-        callbackScope: this,
-        onComplete: () => {
-          GameEvents.get().emit(GameEvents.TILE_DESELECTION, dataIdx);
-        },
-      });
-      return;
-    }
-  }
 }
