@@ -60,19 +60,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.setState(IDLE);
   }
 
-  onSpaceKeyDown() {
-    if(this.state != IDLE) return
-    this.setState(UPDATING)
-    this.events.emit(GameEvents.LOGIC_ACCEPT_SELECTION)
-  }
-
-  onTileClicked(boardIdx: integer) {
-    console.log(this.state)
-    console.log(this.animQueue)
-    this.checkAnimations()
-    if(this.state != IDLE) return
-    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
-  }
 
   private createTiles() {
     console.log("Generating Tiles...");
@@ -179,6 +166,20 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
    * Event Handlers
    */
 
+  onSpaceKeyDown() {
+    if(this.state != IDLE) return
+    this.setState(UPDATING)
+    this.events.emit(GameEvents.LOGIC_ACCEPT_SELECTION)
+  }
+
+  onTileClicked(boardIdx: integer) {
+    console.log(this.state)
+    console.log(this.animQueue)
+    this.checkAnimations()
+    if(this.state != IDLE) return
+    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
+  }
+
   onBoardUpdated(dropData: integer[][]) {
 
     let slot: AnimationSlot = {
@@ -210,8 +211,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         (this.config.tileHeight + this.config.tilePadding) * dropCount;
 
       let row = this.config.gameBoard.getRow(tile.config.boardIndex)
-      let duration = 500
+      let duration = 250 
       let rowOffset = duration / this.config.gameBoard.config.width
+
+      console.log(row, duration, rowOffset)
 
       slot.tweens.push({
         targets: this.tiles[newBoardIndex].container,
@@ -240,10 +243,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
           scale: { from: 0 },
         },
         ease: "Back.easeInOut",
-        duration: 250,
-        repeat: 0,
-        yoyo: false,
-        delay: 50 * selIdx,
+        duration: 200,
+        delay: 30 * selIdx,
       });
     });
     this.enqueueAnim(slot);
@@ -275,17 +276,13 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onValidSelection(dataIdx: integer) {
+    this.tiles[dataIdx].setFrame("tileHilight");
     this.scene.tweens.add({
       targets: [this.tiles[dataIdx].container],
       scale: { from: 1, to: 1.1 },
       ease: "Back.easeInOut",
       duration: 250,
       repeat: 0,
-      yoyo: true,
-      onYoyoScope: this,
-      onYoyo: () => {
-        this.tiles[dataIdx].setFrame("tileHilight");
-      },
     });
   }
 
