@@ -1,5 +1,5 @@
-import GameBoard from "../lib/GameBoard"
-import GameBoardDisplay from "../lib/GameBoardDisplay"
+import GameBoard from "./lib/GameBoard"
+import GameBoardDisplay from "./lib/GameBoardDisplay"
 
 // const tileColorA : number = 0x265473;
 // const tileColorB : number = 0xEF476F;

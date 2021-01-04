@@ -1,5 +1,5 @@
 import 'phaser';
-import NumberGameScene from "./scenes/NumberGameScene"
+import NumberGameScene from "./NumberGameScene"
 import { WebFontLoaderPlugin } from "./lib/WebFont"
 
 const config = {
