@@ -49,6 +49,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     });
 
     this.text = new Phaser.GameObjects.Text(this.scene, 0, 0, "-", TEXT_STYLE);
+    this.text.setScale(0.5)
     this.text.setOrigin(0.5);
     this.text.setText("?");
 

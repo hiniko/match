@@ -1,6 +1,6 @@
 export const TEXT_STYLE = {
   fontFamily: "NunitoExtraBold",
-  fontSize: "24px",
+  fontSize: "48px",
   shadow: {
     offsetX: 2,
     offsetY: 2,
