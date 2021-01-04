@@ -282,7 +282,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       scale: { from: 1, to: 1.1 },
       ease: "Back.easeInOut",
       duration: 250,
-      repeat: 0,
+      yoyo: true
+
     });
   }
 
