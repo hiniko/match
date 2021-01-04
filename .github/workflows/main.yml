@@ -10,7 +10,6 @@ jobs:
           persist-credentials: false
 
       - name: Install and Build 🔧
-        working-directory: numbers
         run: |
           npm install
           npm run build
