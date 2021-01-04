@@ -19,5 +19,6 @@ jobs:
         with:
           author_name: Sherman Rose (GHA) 
           author_email: sherman@shermanrose.uk
+          add: "*.js"
           branch: gh-pages
           message: 'Built by Github Actions'
