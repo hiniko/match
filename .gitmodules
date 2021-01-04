@@ -1,3 +1,0 @@
-[submodule "Phaser Template"]
-	path = templates/phaser3-typescript-project-template
-	url = git@github.com:photonstorm/phaser3-typescript-project-template.git
