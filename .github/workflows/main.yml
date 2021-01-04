@@ -2,28 +2,28 @@ name: Build and Deploy
 on: [push]
 jobs:
   build-and-deploy:
-  - uses: actions/checkout@v2
-    with:
-      persist-credentials: false
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
 
-  - uses: EndBug/add-and-commit@v6 # You can change this to use a specific version
-    with:
-      # The name of the user that will be displayed as the author of the commit
-      # Default: author of the commit that triggered the run
-      author_name: Sherman Rose (GHA) 
+    - uses: EndBug/add-and-commit@v6 # You can change this to use a specific version
+      with:
+        # The name of the user that will be displayed as the author of the commit
+        # Default: author of the commit that triggered the run
+        author_name: Sherman Rose (GHA) 
 
-      # The email of the user that will be displayed as the author of the commit
-      # Default: author of the commit that triggered the run
-      author_email: sherman@shermanrose.uk
+        # The email of the user that will be displayed as the author of the commit
+        # Default: author of the commit that triggered the run
+        author_email: sherman@shermanrose.uk
 
-      # Name of the branch to use, if different from the one that triggered the workflow
-      # Default: the branch that triggered the run
-      branch: gh-pages
+        # Name of the branch to use, if different from the one that triggered the workflow
+        # Default: the branch that triggered the run
+        branch: gh-pages
 
-      # The message for the commit
-      # Default: 'Commit from GitHub Actions (name of the workflow)'
-      message: 'Your commit message'
+        # The message for the commit
+        # Default: 'Commit from GitHub Actions (name of the workflow)'
+        message: 'Your commit message'
 
-      # Token to use for pushing the commit. The default value won't trigger any workflows, you need to use a Personal Access Token for that.
-      # Default: secrets.GITHUB_TOKEN
-      token: ${{ secrets.GITHUB_TOKEN }}
+        # Token to use for pushing the commit. The default value won't trigger any workflows, you need to use a Personal Access Token for that.
+        # Default: secrets.GITHUB_TOKEN
+        token: ${{ secrets.GITHUB_TOKEN }}
