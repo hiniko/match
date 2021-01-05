@@ -24,10 +24,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   config: GameBoardDisplayConfig;
   events: GameEvents;
   scene: Phaser.Scene;
-  group: Phaser.GameObjects.Group;
+  tileGroup: Phaser.GameObjects.Group;
   board: GameBoard;
   timeline: Phaser.Tweens.Timeline;
-  tiles: Tile[] = [];
+  activeTiles: Tile[] = [];
   container: Phaser.GameObjects.Container;
 
   animLockCount: integer = 0;
@@ -40,7 +40,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
     this.config = config;
     this.events = GameEvents.get();
-    this.group = new Phaser.GameObjects.Group(this.scene);
+    this.tileGroup = new Phaser.GameObjects.Group(this.scene);
     this.container = new Phaser.GameObjects.Container(this.scene);
     this.timeline = this.scene.tweens.createTimeline();
 
@@ -82,7 +82,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         value: 0,
       });
 
-      this.group.add(tile);
+      this.tileGroup.add(tile);
     }
   }
 
@@ -110,7 +110,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       x += this.config.tileWidth + this.config.tilePadding;
 
       this.container.add(tile.container);
-      this.tiles[i] = tile;
+      this.activeTiles[i] = tile;
     }
   }
 
@@ -119,7 +119,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   private getNextTile(): Tile {
-    let tile = this.group.getFirstDead(false);
+    let tile = this.tileGroup.getFirstDead(false);
     if (tile === null) {
       console.error("Failed to get a dead tile from the group");
       throw Error("Failed to get a dead tile from the group");
@@ -180,30 +180,36 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
-  onBoardUpdated(dropData: integer[][]) {
+  onBoardUpdated(dropData: integer[][], newIdxs: integer[][]) {
 
-    let slot: AnimationSlot = {
+    let dropSlot: AnimationSlot = {
       blocking: true,
       tweens: []
     }
 
+    let newSlot: AnimationSlot = {
+      blocking: true,
+      tweens: []
+    }
+
+    // Drop tiles 
     for (let i = 0; i < dropData.length; i++) {
       let oldBoardIndex = dropData[i][0];
       let newBoardIndex = dropData[i][1];
       let dropCount = dropData[i][2];
 
       if (newBoardIndex == null) {
-        this.tiles[oldBoardIndex].setEnabled(false);
-        this.tiles[oldBoardIndex] = null;
+        this.activeTiles[oldBoardIndex].setEnabled(false);
+        this.activeTiles[oldBoardIndex] = null;
         console.log(dropData[i]);
         continue;
       }
 
       // Update Tile
-      let tile = this.tiles[oldBoardIndex];
-      this.tiles[newBoardIndex] = tile;
+      let tile = this.activeTiles[oldBoardIndex];
+      this.activeTiles[newBoardIndex] = tile;
       tile.config.boardIndex = newBoardIndex;
-      this.tiles[oldBoardIndex] = null;
+      this.activeTiles[oldBoardIndex] = null;
 
       // Queue a remove tween for the tile
       let newY =
@@ -216,8 +222,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       console.log(row, duration, rowOffset)
 
-      slot.tweens.push({
-        targets: this.tiles[newBoardIndex].container,
+      dropSlot.tweens.push({
+        targets: this.activeTiles[newBoardIndex].container,
         props: {
          y: { value: newY }
         },
@@ -226,7 +232,14 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         duration: duration,
       });
     }
-    this.enqueueAnim(slot);
+    this.enqueueAnim(dropSlot);
+
+    for(let i=0; i<dropData.length; i++) {
+      // need to find right y to dorp them in and decide spawn drop point
+      let tile: Tile = this.tileGroup.get()
+      tile.reset
+    }
+
   }
 
   onClearSelection(acceptedIdxs: integer[]) {
@@ -235,9 +248,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       tweens: []
     }
     acceptedIdxs.forEach((dataIdx: integer, selIdx: integer) => {
-      this.tiles[dataIdx].setEnabled(false);
+      this.activeTiles[dataIdx].setEnabled(false);
       slot.tweens.push({
-        targets: [this.tiles[dataIdx].container],
+        targets: [this.activeTiles[dataIdx].container],
         props: {
           alpha: { value: 0 },
           scale: { from: 0 },
@@ -257,7 +270,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     }
     dataIdxs.forEach((dataIdx, idx) => {
       slot.tweens.push({
-        targets: this.tiles[dataIdx].container,
+        targets: this.activeTiles[dataIdx].container,
         props: {
           alpha: { value: 0.85 },
           scale: { value: 0.9 },
@@ -268,7 +281,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         yoyo: true,
         onYoyoScope: this,
         onYoyo: () => {
-          this.tiles[dataIdx].resetFrame();
+          this.activeTiles[dataIdx].resetFrame();
         },
       });
     });
@@ -276,9 +289,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onValidSelection(dataIdx: integer) {
-    this.tiles[dataIdx].setFrame("tileHilight");
+    this.activeTiles[dataIdx].setFrame("tileHilight");
     this.scene.tweens.add({
-      targets: [this.tiles[dataIdx].container],
+      targets: [this.activeTiles[dataIdx].container],
       scale: { from: 1, to: 1.1 },
       ease: "Back.easeInOut",
       duration: 250,
@@ -289,7 +302,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
   onInvalidSelection(dataIdx: integer) {
     this.scene.tweens.add({
-      targets: [this.tiles[dataIdx].container],
+      targets: [this.activeTiles[dataIdx].container],
       alpha: { from: 1, to: 0.85 },
       angle: { from: 0, to: 25 },
       ease: "Back.easeInOut",
@@ -298,10 +311,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       yoyo: true,
       callbackScope: this,
       onStart: () => {
-        this.tiles[dataIdx].setFrame("tileError");
+        this.activeTiles[dataIdx].setFrame("tileError");
       },
       onComplete: () => {
-        this.tiles[dataIdx].resetFrame();
+        this.activeTiles[dataIdx].resetFrame();
       },
     });
   }

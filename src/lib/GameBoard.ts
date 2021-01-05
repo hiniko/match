@@ -115,8 +115,19 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
       dropData.push([i, nextBelowIdx, dropCount]);
     }
 
+    let newIdxs: integer[][] = []
+
+    for(let i=0; i<this.boardSize; i++) {
+      if(this.boardData[i] != null) continue
+      let num = this.getRandomValue()
+      let row = this.getRow(i)
+      this.boardData[i] = num
+      newIdxs.push([num, row])
+    }
+
     this.events.emit(GameEvents.LOGIC_CLEAR_SELECTION, this.selected);
-    this.events.emit(GameEvents.LOGIC_BOARD_UPDATED, dropData);
+    this.events.emit(GameEvents.LOGIC_BOARD_UPDATED, dropData, newIdxs);
+
 
     this.selected.length = 0;
   }
