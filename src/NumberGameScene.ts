@@ -6,8 +6,8 @@ import GameBoardDisplay from "./lib/GameBoardDisplay"
 // const tileColorC : number = 0x39A9DB;
 // const tileColorD : number = 0x06D6A0;
 // const tileColorE : number = 0x06BEE1;
-//const tileColorHilight : number = 0xFFD166;
-//const tileColorError : number = 0xE63946;
+// const tileColorHilight : number = 0xFFD166;
+// const tileColorError : number = 0xE63946;
 
 const tileColorA : number = 0xFFBE0B;
 const tileColorB : number = 0xFB5607;
@@ -114,9 +114,12 @@ export default class NumbersGame extends Phaser.Scene {
 
     create ()
     {            
+
+        let { width, height } = this.sys.game.canvas;
+
         this.board = new GameBoard({
              scene: this, 
-             width: 6, 
+             width: 8, 
              height: 6, 
              startingMaxValue: 10
         })
@@ -131,14 +134,14 @@ export default class NumbersGame extends Phaser.Scene {
           gameBoard: this.board,
          })
 
-        this.boardDisplay.setPosition(100, 300);
         this.boardDisplay.createBoard()
 
-        //this.add.existing(this.board)
+        const boardOffsetX = (width - (tileWidth * this.board.config.width) +(tilePadding * (this.board.config.width -1))) / 2
+        this.boardDisplay.setPosition(boardOffsetX, 300);
+
         this.add.existing(this.boardDisplay.container)
 
 
-        // create all of the number tiles for the board
         
 
     //     this.add.shader('RGB Shift Field', 0, 0, 800, 600).setOrigin(0);

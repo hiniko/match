@@ -83,10 +83,10 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
       if (this.boardData[i] == null) continue
 
       let row = this.getRow(i);
-      let belowIdx = i + this.config.height;
-
       // Skip if this is the bottom row
       if (row == this.config.height - 1) continue
+
+      let belowIdx = i + this.config.width;
 
       // skip if the row below has a tile
       if (this.boardData[belowIdx] != null) continue
@@ -101,13 +101,13 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
         // if the new next below index is greater than the board or the next space isn't null
         if (
-          nextBelowIdx + this.config.height >= this.boardSize ||
-          this.boardData[nextBelowIdx + this.config.height] != null
+          nextBelowIdx + this.config.width>= this.boardSize ||
+          this.boardData[nextBelowIdx + this.config.width] != null
         )
           break;
 
         // increment the nextBelow index
-        nextBelowIdx = nextBelowIdx + this.config.height;
+        nextBelowIdx = nextBelowIdx + this.config.width;
       }
 
       this.boardData[nextBelowIdx] = this.boardData[i];
@@ -117,25 +117,21 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
     let newIdxs: integer[][] = []
 
-    for(let i=0; i<this.boardSize; i++) {
-      if(this.boardData[i] != null) continue
-      let num = this.getRandomValue()
-      let row = this.getRow(i)
-      this.boardData[i] = num
-      newIdxs.push([num, row])
-    }
+    // for(let i=0; i<this.boardSize; i++) {
+    //   if(this.boardData[i] != null) continue
+    //   let num = this.getRandomValue()
+    //   let row = this.getRow(i)
+    //   this.boardData[i] = num
+    //   newIdxs.push([num, row])
+    // }
 
     this.events.emit(GameEvents.LOGIC_CLEAR_SELECTION, this.selected);
     this.events.emit(GameEvents.LOGIC_BOARD_UPDATED, dropData, newIdxs);
 
-
     this.selected.length = 0;
   }
 
-
   onUpdateSelection(dataIdx) {
-    console.log(dataIdx)
-    console.log(this.selected)
     // If this is a unselection
     let foundIdx = this.selected.findIndex((selIdx: integer) =>  selIdx == dataIdx)
     if(foundIdx > -1) {
@@ -144,7 +140,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
         GameEvents.LOGIC_UNSELECTION,
         this.selected.splice(0, foundIdx + 1)
       );
-    console.log(this.selected)
       return
     }
 
@@ -152,7 +147,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     if (this.selected.length == 0) {
       this.selected.unshift(dataIdx);
       GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx);
-      console.log(this.selected)
       return
     }
 
@@ -173,8 +167,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     } else {
       GameEvents.get().emit(GameEvents.LOGIC_INVALID_SELECTION, dataIdx);
     }
-
-    console.log(this.selected)
   }
 
 }

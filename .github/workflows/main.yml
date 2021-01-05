@@ -22,3 +22,4 @@ jobs:
           add: "*.js"
           branch: gh-pages
           message: 'Built by Github Actions'
+          token: ${{ secrets.GITHUB_TOKEN }}

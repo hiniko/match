@@ -10,7 +10,7 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
   }
 
   emit(event: string | symbol, ...args: any[]): boolean{
-    console.log("emitted " + event.toString())
+    //console.log("emitted " + event.toString())
     return super.emit(event, ...args)
   }
 

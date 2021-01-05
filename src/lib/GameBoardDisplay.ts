@@ -25,7 +25,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   events: GameEvents;
   scene: Phaser.Scene;
   tileGroup: Phaser.GameObjects.Group;
-  board: GameBoard;
   timeline: Phaser.Tweens.Timeline;
   activeTiles: Tile[] = [];
   container: Phaser.GameObjects.Container;
@@ -173,8 +172,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onTileClicked(boardIdx: integer) {
-    console.log(this.state)
-    console.log(this.animQueue)
     this.checkAnimations()
     if(this.state != IDLE) return
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
@@ -201,7 +198,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       if (newBoardIndex == null) {
         this.activeTiles[oldBoardIndex].setEnabled(false);
         this.activeTiles[oldBoardIndex] = null;
-        console.log(dropData[i]);
         continue;
       }
 
@@ -220,8 +216,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       let duration = 250 
       let rowOffset = duration / this.config.gameBoard.config.width
 
-      console.log(row, duration, rowOffset)
-
       dropSlot.tweens.push({
         targets: this.activeTiles[newBoardIndex].container,
         props: {
@@ -234,11 +228,13 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     }
     this.enqueueAnim(dropSlot);
 
-    for(let i=0; i<dropData.length; i++) {
-      // need to find right y to dorp them in and decide spawn drop point
-      let tile: Tile = this.tileGroup.get()
-      tile.reset
-    }
+
+
+    // for(let i=0; i<dropData.length; i++) {
+    //   // need to find right y to dorp them in and decide spawn drop point
+    //   let tile: Tile = this.tileGroup.get()
+    //   tile.reset
+    // }
 
   }
 
