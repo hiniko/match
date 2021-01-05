@@ -104,7 +104,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
           nextBelowIdx + this.config.width>= this.boardSize ||
           this.boardData[nextBelowIdx + this.config.width] != null
         )
-          break;
+        break;
 
         // increment the nextBelow index
         nextBelowIdx = nextBelowIdx + this.config.width;
@@ -115,25 +115,26 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
       dropData.push([i, nextBelowIdx, dropCount]);
     }
 
-    let newIdxs: integer[][] = []
+    let newData: integer[][] = []
 
-    // for(let i=0; i<this.boardSize; i++) {
-    //   if(this.boardData[i] != null) continue
-    //   let num = this.getRandomValue()
-    //   let row = this.getRow(i)
-    //   this.boardData[i] = num
-    //   newIdxs.push([num, row])
-    // }
+    for(let i=0; i<this.boardSize; i++) {
+       if(this.boardData[i] != null) continue
+       let num = this.getRandomValue()
+       let col = this.getCol(i)
+       let row = this.getRow(i)
+       this.boardData[i] = num
+       newData.push([i, num, col, row])
+    }
 
     this.events.emit(GameEvents.LOGIC_CLEAR_SELECTION, this.selected);
-    this.events.emit(GameEvents.LOGIC_BOARD_UPDATED, dropData, newIdxs);
+    this.events.emit(GameEvents.LOGIC_BOARD_UPDATED, dropData, newData);
 
     this.selected.length = 0;
   }
 
   onUpdateSelection(dataIdx) {
     // If this is a unselection
-    let foundIdx = this.selected.findIndex((selIdx: integer) =>  selIdx == dataIdx)
+    let foundIdx = this.selected.findIndex((selIdx: integer) => selIdx == dataIdx)
     if(foundIdx > -1) {
       // Remove the elements from the array and emit and event with the removed selections
       GameEvents.get().emit(

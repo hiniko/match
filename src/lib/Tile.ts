@@ -70,6 +70,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.config.value = value;
     this.container.setPosition(x, y);
     this.text.setText(value.toString());
+    this.sprite.setFrame(this.randomSpriteFrame())
   }
 
   setPosition(x: integer, y: integer) {
@@ -126,6 +127,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
   // }
 
   onTileClicked(pointer, localX, localY, event) {
+    console.log(this.config.boardIndex)
     GameEvents.get().emit(GameEvents.BOARD_TILE_CLICKED, this.config.boardIndex);
   }
 

@@ -177,7 +177,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
-  onBoardUpdated(dropData: integer[][], newIdxs: integer[][]) {
+  onBoardUpdated(dropData: integer[][], newData: integer[][]) {
 
     let dropSlot: AnimationSlot = {
       blocking: true,
@@ -191,6 +191,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
     // Drop tiles 
     for (let i = 0; i < dropData.length; i++) {
+
+      console.log(dropData[i])
+
       let oldBoardIndex = dropData[i][0];
       let newBoardIndex = dropData[i][1];
       let dropCount = dropData[i][2];
@@ -229,12 +232,23 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.enqueueAnim(dropSlot);
 
 
+    console.log("logic board", this.config.gameBoard.boardData)
+    console.log("display board", this.activeTiles)
 
-    // for(let i=0; i<dropData.length; i++) {
-    //   // need to find right y to dorp them in and decide spawn drop point
-    //   let tile: Tile = this.tileGroup.get()
-    //   tile.reset
-    // }
+    for(let i=0; i<newData.length; i++) {
+      let idx = newData[i][0]
+      let num = newData[i][1]
+      let col = newData[i][2]
+      let row = newData[i][3]
+
+      // get a tile and place drop it into the board
+      let tile: Tile = this.tileGroup.get()
+      let x = (col * this.config.tileWidth) + (this.config.tilePadding * col - 1)
+      let y = this.config.tileWidth * -1
+      console.log(x, y)
+      tile.reset(x, y, idx, num)
+      this.activeTiles[i] = tile
+    }
 
   }
 
