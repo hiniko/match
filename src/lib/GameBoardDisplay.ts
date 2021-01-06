@@ -17,8 +17,10 @@ interface AnimationSlot {
   tweens : Phaser.Types.Tweens.TweenBuilderConfig[]
 }
 
-const UPDATING = "updating";
-const IDLE = "idle";
+const UPDATING = "updating"
+const IDLE = "idle"
+
+const FALL_DURATION = 250
 
 export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   config: GameBoardDisplayConfig;
@@ -71,7 +73,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     ) {
       let tile = new Tile({
         scene: this.scene,
-        active: false,
         boardIndex: -1,
         spriteFrameRange: this.config.spriteFrameCount,
         spriteKey: this.config.spriteKey,
@@ -158,7 +159,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         };
         this.scene.tweens.add(tween);
       });
+    }else {
+      this.events.checkDeferred()
     }
+
   }
 
   /*
@@ -172,6 +176,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onTileClicked(boardIdx: integer) {
+    console.log(this.activeTiles[boardIdx])
     this.checkAnimations()
     if(this.state != IDLE) return
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
@@ -179,20 +184,28 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
 
+    if(this.state != IDLE) {
+      console.log("Deferring Event onboardupdated")
+      this.events.defer({
+        name: "GameBoardDisplay.onBoardUpdated", 
+        callback: (args:any[]) => {
+          this.onBoardUpdated(args[0], args[1])
+        },
+        callbackContext: this,
+        args: [dropData, newData]
+      })
+      return;
+    }
+
     let dropSlot: AnimationSlot = {
       blocking: true,
       tweens: []
     }
 
-    let newSlot: AnimationSlot = {
-      blocking: true,
-      tweens: []
-    }
+    console.log(dropData)
 
     // Drop tiles 
     for (let i = 0; i < dropData.length; i++) {
-
-      console.log(dropData[i])
 
       let oldBoardIndex = dropData[i][0];
       let newBoardIndex = dropData[i][1];
@@ -200,6 +213,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       if (newBoardIndex == null) {
         this.activeTiles[oldBoardIndex].setEnabled(false);
+        this.container.remove(this.activeTiles[oldBoardIndex])
         this.activeTiles[oldBoardIndex] = null;
         continue;
       }
@@ -210,32 +224,23 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       tile.config.boardIndex = newBoardIndex;
       this.activeTiles[oldBoardIndex] = null;
 
-      // Queue a remove tween for the tile
       let newY =
         tile.container.y +
         (this.config.tileHeight + this.config.tilePadding) * dropCount;
 
-      let row = this.config.gameBoard.getRow(tile.config.boardIndex)
-      let duration = 250 
-      let rowOffset = duration / this.config.gameBoard.config.width
+      let row = this.config.gameBoard.getRow(newBoardIndex);
 
-      dropSlot.tweens.push({
-        targets: this.activeTiles[newBoardIndex].container,
-        props: {
-         y: { value: newY }
-        },
-        ease: "Bounce.easeOut",
-        delay: duration - (row * rowOffset),
-        duration: duration,
-      });
+      this.queueDropTween(tile, dropSlot, newY, row, 250)
+
     }
-    this.enqueueAnim(dropSlot);
-
 
     console.log("logic board", this.config.gameBoard.boardData)
     console.log("display board", this.activeTiles)
 
+    console.log(newData)
+
     for(let i=0; i<newData.length; i++) {
+
       let idx = newData[i][0]
       let num = newData[i][1]
       let col = newData[i][2]
@@ -243,13 +248,36 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       // get a tile and place drop it into the board
       let tile: Tile = this.tileGroup.get()
-      let x = (col * this.config.tileWidth) + (this.config.tilePadding * col - 1)
-      let y = this.config.tileWidth * -1
-      console.log(x, y)
+
+      let x = (col * this.config.tileWidth) + (this.config.tilePadding * col )
+      let y = 0 
+      let newY = ((row + 1) * this.config.tileHeight) + (this.config.tilePadding * (row + 1))
+
       tile.reset(x, y, idx, num)
       this.activeTiles[i] = tile
+
+      console.log(tile)
+
+      this.queueDropTween(tile, dropSlot, newY, row, 250)
     }
 
+    console.log(dropSlot)
+    this.enqueueAnim(dropSlot);
+
+  }
+
+  queueDropTween(tile: Tile, slot: AnimationSlot, y: integer, row: integer, duration: integer) {
+    let rowOffset = duration / this.config.gameBoard.config.width
+
+    slot.tweens.push({
+      targets: tile.container,
+      props: {
+        y: { value: y }
+      },
+      ease: "Bounce.easeOut",
+      delay: duration - (row * rowOffset),
+      duration: duration,
+    });
   }
 
   onClearSelection(acceptedIdxs: integer[]) {

@@ -1,12 +1,33 @@
-export default class GameEvents extends Phaser.Events.EventEmitter { 
+interface DeferredEvent {
+  name: string,
+  callback: (...args: any[]) => void
+  callbackContext: any
+  args: any[]
+}
+export default class GameEvents extends Phaser.Events.EventEmitter {  
 
   private static instance = null
+  private deferred: DeferredEvent[] = []
 
   static get() : GameEvents {
     if(GameEvents.instance === null){
       GameEvents.instance = new GameEvents()
     }
     return GameEvents.instance
+  }
+
+  defer(event: DeferredEvent) {
+    this.deferred.push(event)
+    
+  }
+
+  checkDeferred() {
+    console.log("Checking for deferred events")
+    if(this.deferred.length < 1) return;
+    let event = this.deferred.pop()
+    console.warn("Calling deferred event:" + event.name)
+    let callback = event.callback.bind(event.callbackContext, event.args)
+    callback()
   }
 
   emit(event: string | symbol, ...args: any[]): boolean{

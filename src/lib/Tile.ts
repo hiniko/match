@@ -6,7 +6,6 @@ interface TileConfig {
   boardIndex: integer;
   spriteKey: string;
   spriteFrameRange: integer;
-  active: boolean;
   tileWidth: integer;
   tileHeight: integer;
   tilePadding: integer; 
@@ -69,6 +68,8 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.config.boardIndex = boardIndex;
     this.config.value = value;
     this.container.setPosition(x, y);
+    this.container.alpha = 1
+    this.container.scale = 1
     this.text.setText(value.toString());
     this.sprite.setFrame(this.randomSpriteFrame())
   }
