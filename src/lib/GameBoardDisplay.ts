@@ -20,7 +20,7 @@ interface AnimationSlot {
 const UPDATING = "updating"
 const IDLE = "idle"
 
-const FALL_DURATION = 250
+const FALL_DURATION = 350
 
 export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   config: GameBoardDisplayConfig;
@@ -230,7 +230,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       let row = this.config.gameBoard.getRow(newBoardIndex);
 
-      this.queueDropTween(tile, dropSlot, newY, row, 250)
+      this.queueDropTween(tile, dropSlot, newY, row, FALL_DURATION)
 
     }
 
@@ -254,11 +254,11 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       let newY = ((row + 1) * this.config.tileHeight) + (this.config.tilePadding * (row + 1))
 
       tile.reset(x, y, idx, num)
-      this.activeTiles[i] = tile
+      this.activeTiles[idx] = tile
 
       console.log(tile)
 
-      this.queueDropTween(tile, dropSlot, newY, row, 250)
+      this.queueDropTween(tile, dropSlot, newY, row, FALL_DURATION)
     }
 
     console.log(dropSlot)
