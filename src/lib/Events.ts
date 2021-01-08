@@ -43,8 +43,15 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
   static LOGIC_ACCEPT_SELECTION = "logicAcceptSelection"
   static LOGIC_CLEAR_SELECTION = "logicClearSelection"
 
-  static BOARD_TILE_CLICKED = "boardTileClicked"
   static BOARD_UPDATE_ANIMATIONS = "boardUpdateAnimations"
   static BOARD_ACCEPT_SELECTION = "boardUpdateSelection"
+
+  static TILE_CLICKED = "tileClicked"
+  static TILE_POINTER_OVER= "tilePointerOver"
+  static TILE_POINTER_OUT = "tilePointerOut"
+
+  static OPS_BUTTON_CLICKED = "opsButtonClicked"
+  static OPS_BUTTON_POINTER_OVER = "opsbuttonOver"
+  static OPS_BUTTON_POINTER_OUT= "opsbuttonOut"
 
 }

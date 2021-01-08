@@ -1,5 +1,5 @@
 import GameEvents from "./Events";
-import { TEXT_STYLE } from "./Styles";
+import { TILE_TEXT_STYLE } from "./Styles";
 
 interface TileConfig {
   scene: Phaser.Scene;
@@ -11,6 +11,8 @@ interface TileConfig {
   tilePadding: integer; 
   value: integer;
 }
+
+const HITAREA = new Phaser.Geom.Rectangle(0,0,64,64)
 
 export default class Tile extends Phaser.GameObjects.GameObject {
   static idCount: integer = -1;
@@ -47,7 +49,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
       frame: this.currentSpriteFrame,
     });
 
-    this.text = new Phaser.GameObjects.Text(this.scene, 0, 0, "-", TEXT_STYLE);
+    this.text = new Phaser.GameObjects.Text(this.scene, 0, 0, "-", TILE_TEXT_STYLE);
     this.text.setScale(0.5)
     this.text.setOrigin(0.5);
     this.text.setText("?");
@@ -80,18 +82,29 @@ export default class Tile extends Phaser.GameObjects.GameObject {
 
   setEnabled(enabled: boolean) {
     if(enabled) {
-      this.container.setInteractive(true).on(
+      this.container.setInteractive(HITAREA, Phaser.Geom.Rectangle.Contains).on(
         Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN,
-        this.onTileClicked,
+        this.onClicked,
+        this
+      ).on(
+        Phaser.Input.Events.GAMEOBJECT_POINTER_OVER,
+        this.onPointerOver,
+        this
+      ).on(
+        Phaser.Input.Events.GAMEOBJECT_POINTER_OUT,
+        this.onPointerOut,
         this
       );
       this.setActive(true)
+      this.container.setActive(true)
       this.sprite.setActive(true)
       this.text.setActive(true)
       
     }else{
-      this.container.setInteractive(false)
+      this.container
+        .setInteractive(false)
         .removeAllListeners()
+        .setActive(false)
       this.setActive(false)
       this.sprite.setActive(false)
       this.text.setActive(false)
@@ -106,30 +119,15 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.sprite.setFrame(frame)
   }
 
-  // onTileDropped(row: integer, col: integer, oldboardIndex: integer, newBoardIndex: integer, dropCount: integer) {
-  //   if(oldboardIndex != this.config.boardIndex)
-  //     return 
-
-  //   this.config.boardIndex = newBoardIndex
-
-  //   // let newY = this.container.y + (this.config.tileHeight + (this.config.tilePadding * dropCount)) * dropCount 
-  //    let newY = this.container.y + (this.config.tileHeight + this.config.tilePadding) * dropCount 
-
-  //   this.scene.tweens.add({
-  //       targets: [this.container],
-  //       y: { from: this.container.y, to: newY},
-  //       ease: "Bounce.easeInOut",
-  //       duration: 500,
-  //       repeat: 0,
-  //       yoyo: false,
-  //       //delay: 50 * delayMultiplier,
-  //     });
-
-  // }
-
-  onTileClicked(pointer, localX, localY, event) {
-    console.log(this.config.boardIndex)
-    GameEvents.get().emit(GameEvents.BOARD_TILE_CLICKED, this.config.boardIndex);
+  onClicked() {
+    GameEvents.get().emit(GameEvents.TILE_CLICKED, this.config.boardIndex);
   }
 
+  onPointerOver(){
+    GameEvents.get().emit(GameEvents.TILE_POINTER_OVER, this.config.boardIndex);
+  }
+
+  onPointerOut() {
+    GameEvents.get().emit(GameEvents.TILE_POINTER_OUT, this.config.boardIndex);
+  }
 }

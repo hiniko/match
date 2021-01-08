@@ -1,6 +1,8 @@
 import GameEvents from "./Events";
 import GameBoard from "./GameBoard";
 import Tile from "./Tile";
+import OpsButton from "./OpsButton" 
+import { OpType } from "./OpsButton"
 
 export interface GameBoardDisplayConfig {
   scene: Phaser.Scene;
@@ -27,9 +29,14 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   events: GameEvents;
   scene: Phaser.Scene;
   tileGroup: Phaser.GameObjects.Group;
+  opsGroup: Phaser.GameObjects.Group;
   timeline: Phaser.Tweens.Timeline;
+  selectedTiles: Tile[] = []
   activeTiles: Tile[] = [];
+  activeOpsButtons: OpsButton[] = []
   container: Phaser.GameObjects.Container;
+
+  objectPoolSize = 0
 
   animLockCount: integer = 0;
   // Really, anim queue needs Phaser.Types.Tweens.TweenBuilderConfig[][] however the builders
@@ -42,6 +49,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.config = config;
     this.events = GameEvents.get();
     this.tileGroup = new Phaser.GameObjects.Group(this.scene);
+    this.opsGroup = new Phaser.GameObjects.Group(this.scene)
     this.container = new Phaser.GameObjects.Container(this.scene);
     this.timeline = this.scene.tweens.createTimeline();
 
@@ -52,25 +60,29 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.events.on(GameEvents.LOGIC_CLEAR_SELECTION, this.onClearSelection, this);
 
     this.events.on(GameEvents.BOARD_UPDATE_ANIMATIONS, this.checkAnimations, this);
-    this.events.on(GameEvents.BOARD_TILE_CLICKED, this.onTileClicked, this)
+
+    // this.events.on(GameEvents.TILE_CLICKED, this.onTileClicked, this)
+    // this.events.on(GameEvents.TILE_POINTER_OVER, this.onTilePointerOver, this)
+    // this.events.on(GameEvents.TILE_POINTER_OUT, this.onTilePointerOut, this)
+
+    this.events.on(GameEvents.OPS_BUTTON_CLICKED, this.onOpsButtonClicked, this)
+    this.events.on(GameEvents.OPS_BUTTON_POINTER_OVER, this.onOpsButtonPointerOver, this)
+    this.events.on(GameEvents.OPS_BUTTON_POINTER_OUT, this.onOpsButtonPointerOut, this)
 
     let spaceKey = this.scene.input.keyboard.addKey("Space")
     spaceKey.on('down', this.onSpaceKeyDown, this)
 
-    this.createTiles();
+    this.objectPoolSize = 
+      this.config.gameBoard.boardSize + Math.floor(this.config.gameBoard.boardSize / 2)
+
+    // this.createTiles();
+    //this.createBoardElements();
+    this.createOpsButtons()
     this.setState(IDLE);
   }
 
-
   private createTiles() {
-    console.log("Generating Tiles...");
-    for (
-      let i = 0;
-      i <
-      this.config.gameBoard.boardSize +
-        Math.floor(this.config.gameBoard.boardSize / 2);
-      i++
-    ) {
+    for ( let i = 0; i < this.objectPoolSize; i++) {
       let tile = new Tile({
         scene: this.scene,
         boardIndex: -1,
@@ -80,16 +92,34 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         tileHeight: this.config.tileHeight,
         tilePadding: this.config.tilePadding,
         value: 0,
-      });
-
-      this.tileGroup.add(tile);
+      })
+      tile.setEnabled(false)
+      this.tileGroup.add(tile)
     }
   }
 
-  createBoard() {
+  private createOpsButtons() {
+   // for ( let i = 0; i < this.objectPoolSize; i++) {
+      let button = new OpsButton({
+        scene: this.scene, 
+        type : OpType.Add
+      })
+
+    //  this.opsGroup.add(button)
+   // }
+
+    //let button: OpsButton = this.opsGroup.get()
+    button.setEnabled(true)
+    button.container.setPosition(0, 0)
+    this.container.add(button.container)
+
+  }
+
+  createBoardElements() {
     let x = 0;
     let y = 0;
 
+    // Create board
     for (var i = 0; i < this.config.gameBoard.boardSize; i++) {
       let newRow =
         i %
@@ -176,16 +206,34 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onTileClicked(boardIdx: integer) {
-    console.log(this.activeTiles[boardIdx])
     this.checkAnimations()
     if(this.state != IDLE) return
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
+  onTilePointerOver(boardIdx: integer) {
+    console.log("mouse over " + boardIdx)
+  }
+
+  onTilePointerOut(boardIdx: integer) {
+    console.log("mouse out " + boardIdx)
+  }
+
+  onOpsButtonClicked(type: OpType) {
+    this.checkAnimations()
+  }
+
+  onOpsButtonPointerOver(type: OpType) {
+    console.log("mouse over " + type)
+  }
+
+  onOpsButtonPointerOut(type: OpType) {
+    console.log("mouse out " + type)
+  }
+
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
 
     if(this.state != IDLE) {
-      console.log("Deferring Event onboardupdated")
       this.events.defer({
         name: "GameBoardDisplay.onBoardUpdated", 
         callback: (args:any[]) => {
@@ -201,8 +249,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       blocking: true,
       tweens: []
     }
-
-    console.log(dropData)
 
     // Drop tiles 
     for (let i = 0; i < dropData.length; i++) {
@@ -234,11 +280,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
     }
 
-    console.log("logic board", this.config.gameBoard.boardData)
-    console.log("display board", this.activeTiles)
-
-    console.log(newData)
-
     for(let i=0; i<newData.length; i++) {
 
       let idx = newData[i][0]
@@ -256,14 +297,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       tile.reset(x, y, idx, num)
       this.activeTiles[idx] = tile
 
-      console.log(tile)
-
       this.queueDropTween(tile, dropSlot, newY, row, FALL_DURATION)
     }
 
-    console.log(dropSlot)
     this.enqueueAnim(dropSlot);
-
   }
 
   queueDropTween(tile: Tile, slot: AnimationSlot, y: integer, row: integer, duration: integer) {
@@ -285,6 +322,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       blocking: true,
       tweens: []
     }
+
+    this.selectedTiles.length = 0
+
     acceptedIdxs.forEach((dataIdx: integer, selIdx: integer) => {
       this.activeTiles[dataIdx].setEnabled(false);
       slot.tweens.push({
@@ -306,7 +346,14 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       blocking: true,
       tweens: []
     }
+
     dataIdxs.forEach((dataIdx, idx) => {
+
+      // Remove the tiles from selected
+      let selectedIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == dataIdx)
+      this.selectedTiles.splice(0, selectedIdx + 1)
+
+      // Animate the tile
       slot.tweens.push({
         targets: this.activeTiles[dataIdx].container,
         props: {
@@ -326,10 +373,37 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.enqueueAnim(slot);
   }
 
-  onValidSelection(dataIdx: integer) {
-    this.activeTiles[dataIdx].setFrame("tileHilight");
+  onValidSelection(boardIdx: integer) {
+
+    this.selectedTiles.push(this.activeTiles[boardIdx])
+    this.activeTiles[boardIdx].setFrame("tileHilight");
+
+
+    let selIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == boardIdx)  
+
+    // if(selIdx > 0) {
+    //   let tile = this.activeTiles[boardIdx] 
+    //   let opsbutton: OpsButton = this.opsGroup.get();
+    //   this.container.add(opsbutton.container)
+    //   opsbutton.container.alpha = 0;
+    //   opsbutton.container.setPosition(tile.container.x, tile.container.y)
+    //   opsbutton.setEnabled(true)
+
+    //   this.activeOpsButtons.push(opsbutton)
+
+    //   this.scene.tweens.add({
+    //     targets: opsbutton,
+    //     ease: "Back.easeInOut",
+    //     duration: 250,
+    //     props: {
+    //       alpha: 1
+    //     }
+    //   })
+
+    // }
+
     this.scene.tweens.add({
-      targets: [this.activeTiles[dataIdx].container],
+      targets: [this.activeTiles[boardIdx].container],
       scale: { from: 1, to: 1.1 },
       ease: "Back.easeInOut",
       duration: 250,
@@ -338,9 +412,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     });
   }
 
-  onInvalidSelection(dataIdx: integer) {
+  onInvalidSelection(boardIdx: integer) {
     this.scene.tweens.add({
-      targets: [this.activeTiles[dataIdx].container],
+      targets: [this.activeTiles[boardIdx].container],
       alpha: { from: 1, to: 0.85 },
       angle: { from: 0, to: 25 },
       ease: "Back.easeInOut",
@@ -349,10 +423,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       yoyo: true,
       callbackScope: this,
       onStart: () => {
-        this.activeTiles[dataIdx].setFrame("tileError");
+        this.activeTiles[boardIdx].setFrame("tileError");
       },
       onComplete: () => {
-        this.activeTiles[dataIdx].resetFrame();
+        this.activeTiles[boardIdx].resetFrame();
       },
     });
   }
