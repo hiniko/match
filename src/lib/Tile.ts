@@ -27,7 +27,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
   config: TileConfig;
   container: Phaser.GameObjects.Container;
   sprite: Phaser.GameObjects.Sprite;
-  currentSpriteFrame: string;
+  currentSpriteFrame: integer;
   text: Phaser.GameObjects.Text;
 
   constructor(config: TileConfig) {
@@ -61,8 +61,8 @@ export default class Tile extends Phaser.GameObjects.GameObject {
       .setInteractive()
   }
 
-  randomSpriteFrame(): string {
-    return "tile" + Math.floor(Math.random() * this.config.spriteFrameRange);
+  randomSpriteFrame(): integer {
+    return Math.floor(Math.random() * this.config.spriteFrameRange);
   }
 
   reset(x: integer, y: integer, boardIndex: integer, value: integer) {
@@ -115,7 +115,7 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.sprite.setFrame(this.currentSpriteFrame);
   }
 
-  setFrame(frame: string) {
+  setFrame(frame: integer) {
     this.sprite.setFrame(frame)
   }
 

@@ -1,8 +1,8 @@
 import GameEvents from "./Events";
 import GameBoard from "./GameBoard";
 import Tile from "./Tile";
-import OpsButton from "./OpsButton" 
-import { OpType } from "./OpsButton"
+import { OpType, OpsButton } from "./OpsButton"
+import { Frames } from "./Graphics"
 
 export interface GameBoardDisplayConfig {
   scene: Phaser.Scene;
@@ -61,13 +61,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
     this.events.on(GameEvents.BOARD_UPDATE_ANIMATIONS, this.checkAnimations, this);
 
-    // this.events.on(GameEvents.TILE_CLICKED, this.onTileClicked, this)
-    // this.events.on(GameEvents.TILE_POINTER_OVER, this.onTilePointerOver, this)
-    // this.events.on(GameEvents.TILE_POINTER_OUT, this.onTilePointerOut, this)
+    this.events.on(GameEvents.TILE_CLICKED, this.onTileClicked, this)
+    this.events.on(GameEvents.TILE_POINTER_OVER, this.onTilePointerOver, this)
+    this.events.on(GameEvents.TILE_POINTER_OUT, this.onTilePointerOut, this)
 
-    this.events.on(GameEvents.OPS_BUTTON_CLICKED, this.onOpsButtonClicked, this)
-    this.events.on(GameEvents.OPS_BUTTON_POINTER_OVER, this.onOpsButtonPointerOver, this)
-    this.events.on(GameEvents.OPS_BUTTON_POINTER_OUT, this.onOpsButtonPointerOut, this)
 
     let spaceKey = this.scene.input.keyboard.addKey("Space")
     spaceKey.on('down', this.onSpaceKeyDown, this)
@@ -75,9 +72,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.objectPoolSize = 
       this.config.gameBoard.boardSize + Math.floor(this.config.gameBoard.boardSize / 2)
 
-    // this.createTiles();
-    //this.createBoardElements();
+    this.createTiles();
     this.createOpsButtons()
+
+    this.assembleBoard();
     this.setState(IDLE);
   }
 
@@ -99,24 +97,22 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   private createOpsButtons() {
-   // for ( let i = 0; i < this.objectPoolSize; i++) {
-      let button = new OpsButton({
+    for ( let i = 0; i < this.objectPoolSize; i++) {
+      this.opsGroup.add(new OpsButton({
         scene: this.scene, 
         type : OpType.Add,
-        defaultScale: 0.5
-      })
+        defaultScale: 0.35
+      }))
+    }
 
-    //  this.opsGroup.add(button)
-   // }
-
-    //let button: OpsButton = this.opsGroup.get()
-    button.setEnabled(true)
-    button.container.setPosition(0, 0)
-    this.container.add(button.container)
+    // let button: OpsButton = this.opsGroup.getFirstDead()
+    // button.setEnabled(true)
+    // button.container.setPosition(0, 0)
+    // this.container.add(button.container)
 
   }
 
-  createBoardElements() {
+  assembleBoard() {
     let x = 0;
     let y = 0;
 
@@ -220,31 +216,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     console.log("mouse out " + boardIdx)
   }
 
-  onOpsButtonClicked(button: OpsButton) {
-    this.checkAnimations()
-  }
-
-  onOpsButtonPointerOver(button: OpsButton) {
-    this.scene.tweens.add({
-      targets: button.container,
-      ease: "Bounce.easeOut",
-      props: {
-        scale: { value: .8}
-      },
-      duration: 250 
-    })
-  }
-
-  onOpsButtonPointerOut(button: OpsButton) {
-    this.scene.tweens.add({
-      targets: button.container,
-      ease: "Bounce.easeOut",
-      props: {
-        scale: { value: button.config.defaultScale }
-      },
-      duration: 250 
-    })
-  }
 
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
 
@@ -305,7 +276,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       // get a tile and place drop it into the board
       let tile: Tile = this.tileGroup.get()
 
-      let x = (col * this.config.tileWidth) + (this.config.tilePadding * col )
+      let x = (col * this.config.tileWidth) + (this.config.tilePadding * col)
       let y = 0 
       let newY = ((row + 1) * this.config.tileHeight) + (this.config.tilePadding * (row + 1))
 
@@ -391,24 +362,28 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   onValidSelection(boardIdx: integer) {
 
     this.selectedTiles.push(this.activeTiles[boardIdx])
-    this.activeTiles[boardIdx].setFrame("tileHilight");
+    this.activeTiles[boardIdx].setFrame(Frames.TileSelected);
 
 
     let selIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == boardIdx)  
 
+
+    // TODO: Need to finish ButtonGroup as that is element we want to be showing in this case
+    // Button group will handle the state of the op buttons
     // if(selIdx > 0) {
     //   let tile = this.activeTiles[boardIdx] 
     //   let opsbutton: OpsButton = this.opsGroup.get();
     //   this.container.add(opsbutton.container)
-    //   opsbutton.container.alpha = 0;
+    //   this.container.bringToTop(opsbutton.container)
+    //   opsbutton.container.alpha = 1;
     //   opsbutton.container.setPosition(tile.container.x, tile.container.y)
     //   opsbutton.setEnabled(true)
 
     //   this.activeOpsButtons.push(opsbutton)
 
     //   this.scene.tweens.add({
-    //     targets: opsbutton,
-    //     ease: "Back.easeInOut",
+    //     targets: opsbutton.container,
+    //     ease: "Back.easeOut",
     //     duration: 250,
     //     props: {
     //       alpha: 1
@@ -438,7 +413,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       yoyo: true,
       callbackScope: this,
       onStart: () => {
-        this.activeTiles[boardIdx].setFrame("tileError");
+        this.activeTiles[boardIdx].setFrame(Frames.TileInvalid);
       },
       onComplete: () => {
         this.activeTiles[boardIdx].resetFrame();

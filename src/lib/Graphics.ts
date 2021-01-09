@@ -1,4 +1,18 @@
-export default class Graphics {
+export enum Frames {
+    TileColor0,
+    TileColor1,
+    TileColor2,
+    TileColor3,
+    TileColor4,
+    TileSelected,
+    TileInvalid,
+    Button,
+    ButtonSelected,
+    ButtonInvalid,
+    __Length
+}
+
+export class Graphics {
 
 
 // Colors
@@ -18,6 +32,7 @@ static LavenderWeb : number = 0xE9E6FF;
 
 static tileSheetKey = "tiles"
 
+
 static tileColors : number[] = [
     Graphics.Mango,
     Graphics.OrangePantone,
@@ -26,22 +41,12 @@ static tileColors : number[] = [
     Graphics.Azure,
 ];
 
-static tileSelected = 5 
-static tileError = 6
-static opsButton = 7
-static opsButtonHighlight = 8
-static opsButtonInactive = 9
-
-static totalSheetCells = 10
-
-static randomTileColorSize : number =  Graphics.tileColors.length - 2
-
 static tileHeight : integer = 64
 static tileWidth  : integer = 64
 static tileBorder : integer = 2
 static tilePadding : integer = 6
 
-static opsBorder = 6
+static buttonBorder = 6
 
 static generateGraphics(scene: Phaser.Scene) {
         let graphics = scene.add.graphics()
@@ -71,14 +76,14 @@ static generateGraphics(scene: Phaser.Scene) {
         x += Graphics.tileWidth
         
         // Unselected
-        graphics.generateTexture(Graphics.tileSheetKey, Graphics.tileWidth * Graphics.totalSheetCells, Graphics.tileHeight)
+        graphics.generateTexture(Graphics.tileSheetKey, Graphics.tileWidth * Frames.__Length, Graphics.tileHeight)
         graphics.clear()
 
         // Add frames to the sprite sheet
         let texture = scene.textures.get(Graphics.tileSheetKey)
 
         x = 0
-        for(let i=0; i<Graphics.totalSheetCells; i++) {                
+        for(let i=0; i<Frames.__Length; i++) {                
             texture.add(i, 0, x, 0, Graphics.tileWidth,Graphics.tileHeight)
             x += Graphics.tileWidth;
         }
@@ -100,9 +105,9 @@ static generateGraphics(scene: Phaser.Scene) {
 
     static createOpsButton(graphics: Phaser.GameObjects.Graphics, x: integer, y: integer, color: number, borderColor: number) {
         graphics.fillStyle(color, 1.0)
-        graphics.lineStyle(Graphics.opsBorder, borderColor, 1.0)
-        graphics.fillCircle(x+32, y+32, 28)
-        graphics.strokeCircle(x+32, y+32, 28)
+        graphics.lineStyle(Graphics.buttonBorder, borderColor, 1.0)
+        graphics.fillCircle(x+32, y+32, 27)
+        graphics.strokeCircle(x+32, y+32, 27)
     }
 
     static createTile(graphics: Phaser.GameObjects.Graphics, x: integer, y: integer, tileColor: number) {

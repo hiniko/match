@@ -1,6 +1,6 @@
 import GameBoard from "./lib/GameBoard"
 import GameBoardDisplay from "./lib/GameBoardDisplay"
-import Graphics from "./lib/Graphics"
+import { Graphics } from "./lib/Graphics"
 
 export default class NumbersGame extends Phaser.Scene {
 
