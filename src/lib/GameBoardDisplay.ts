@@ -102,7 +102,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
    // for ( let i = 0; i < this.objectPoolSize; i++) {
       let button = new OpsButton({
         scene: this.scene, 
-        type : OpType.Add
+        type : OpType.Add,
+        defaultScale: 0.5
       })
 
     //  this.opsGroup.add(button)
@@ -219,16 +220,30 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     console.log("mouse out " + boardIdx)
   }
 
-  onOpsButtonClicked(type: OpType) {
+  onOpsButtonClicked(button: OpsButton) {
     this.checkAnimations()
   }
 
-  onOpsButtonPointerOver(type: OpType) {
-    console.log("mouse over " + type)
+  onOpsButtonPointerOver(button: OpsButton) {
+    this.scene.tweens.add({
+      targets: button.container,
+      ease: "Bounce.easeOut",
+      props: {
+        scale: { value: .8}
+      },
+      duration: 250 
+    })
   }
 
-  onOpsButtonPointerOut(type: OpType) {
-    console.log("mouse out " + type)
+  onOpsButtonPointerOut(button: OpsButton) {
+    this.scene.tweens.add({
+      targets: button.container,
+      ease: "Bounce.easeOut",
+      props: {
+        scale: { value: button.config.defaultScale }
+      },
+      duration: 250 
+    })
   }
 
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
@@ -331,7 +346,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         targets: [this.activeTiles[dataIdx].container],
         props: {
           alpha: { value: 0 },
-          scale: { from: 0 },
+          scale: { value: 0 },
         },
         ease: "Back.easeInOut",
         duration: 200,

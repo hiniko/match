@@ -12,6 +12,7 @@ export enum OpType {
 interface OpsButtonConfig {
     scene: Phaser.Scene
     type: OpType
+    defaultScale: number
 }
 
 export default class OpsButton extends Phaser.GameObjects.GameObject {
@@ -26,8 +27,8 @@ export default class OpsButton extends Phaser.GameObjects.GameObject {
         this.config = config
  
         this.container = new Phaser.GameObjects.Container(this.config.scene)
-        this.sprite = new Phaser.GameObjects.Sprite(this.config.scene, 0, 0, Graphics.tileSheet)
-        this.sprite.setFrame(Graphics.opsTile)
+        this.sprite = new Phaser.GameObjects.Sprite(this.config.scene, 0, 0, Graphics.tileSheetKey)
+        this.sprite.setFrame(Graphics.opsButton)
         this.text = new Phaser.GameObjects.Text(this.config.scene, 0, -4, "-", OPS_TEXT_STYLE)
 
         this.text.setOrigin(0.5)
@@ -38,7 +39,7 @@ export default class OpsButton extends Phaser.GameObjects.GameObject {
         this.container.add([this.sprite, this.text])
         this.container.setSize(64, 64)
         this.container.setInteractive(HITAREA, Phaser.Geom.Circle.Contains)
-        this.container.setScale(0.5)
+        this.container.setScale(config.defaultScale)
 
 //        this.setActive(false)
     }
@@ -56,11 +57,11 @@ export default class OpsButton extends Phaser.GameObjects.GameObject {
                 this
             ).on(
                 Phaser.Input.Events.GAMEOBJECT_POINTER_OVER,
-                this.onClicked,
+                this.onPointerOver,
                 this
             ).on(
                 Phaser.Input.Events.GAMEOBJECT_POINTER_OUT,
-                this.onClicked,
+                this.onPointerOut,
                 this)
         }else{
             this.container
@@ -90,8 +91,16 @@ export default class OpsButton extends Phaser.GameObjects.GameObject {
      * Event Handlers
      */
 
+    onPointerOver() {
+        GameEvents.get().emit(GameEvents.OPS_BUTTON_POINTER_OVER, this)
+    }
+
+    onPointerOut() {
+        GameEvents.get().emit(GameEvents.OPS_BUTTON_POINTER_OUT, this)
+    }
+
     onClicked() {
-        GameEvents.get().emit(GameEvents.OPS_BUTTON_CLICKED, this.config.type);
+        GameEvents.get().emit(GameEvents.OPS_BUTTON_CLICKED, this);
     }
 
 }

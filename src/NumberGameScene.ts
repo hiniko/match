@@ -35,7 +35,7 @@ export default class NumbersGame extends Phaser.Scene {
 
         this.boardDisplay = new GameBoardDisplay({
           scene: this,
-          spriteKey: Graphics.tileSheet,
+          spriteKey: Graphics.tileSheetKey,
           spriteFrameCount: 5,
           tileWidth: Graphics.tileWidth,
           tileHeight: Graphics.tileHeight,

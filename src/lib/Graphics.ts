@@ -1,37 +1,40 @@
 export default class Graphics {
 
-static tileColorA : number = 0xFFBE0B; 
-static tileColorB : number = 0xFB5607;
-static tileColorC : number = 0xFFB7FF;
-static tileColorD : number = 0x8338EC;
-static tileColorE : number = 0x3A86FF;
 
-static tileColorHilight : number = 0x40F99B;
-static tileColorError : number = 0x302B27;
-
-static tileSheet = "tiles"
+// Colors
 
 static White : number = 0xFFFFFF;
 static Grey  : number = 0xD3D3D3; 
 static Black : number = 0x000000;
+static MediumSpringGreen : number = 0x40F99B;
+static Jet: number = 0x302B27;
+static Mango: number = 0xFFBE0B; 
+static OrangePantone: number = 0xFB5607;
+static Mauve: number = 0xFFB7FF;
+static BlueViolet: number = 0x8338EC;
+static Azure: number = 0x3A86FF;
+static RedCrayola : number = 0xEF2D56;
+static LavenderWeb : number = 0xE9E6FF;
+
+static tileSheetKey = "tiles"
 
 static tileColors : number[] = [
-    Graphics.tileColorA,
-    Graphics.tileColorB,
-    Graphics.tileColorC,
-    Graphics.tileColorD,
-    Graphics.tileColorE,
-    Graphics.tileColorHilight,
-    Graphics.tileColorError
+    Graphics.Mango,
+    Graphics.OrangePantone,
+    Graphics.Mauve,
+    Graphics.BlueViolet,
+    Graphics.Azure,
 ];
 
-static tileHighlight = 5 
+static tileSelected = 5 
 static tileError = 6
-static opsTile = 7
+static opsButton = 7
+static opsButtonHighlight = 8
+static opsButtonInactive = 9
+
+static totalSheetCells = 10
 
 static randomTileColorSize : number =  Graphics.tileColors.length - 2
-// Addtional sprite sheet elements until I 
-static additionalSlots= 1
 
 static tileHeight : integer = 64
 static tileWidth  : integer = 64
@@ -46,64 +49,82 @@ static generateGraphics(scene: Phaser.Scene) {
         let x = 0
         let y = 0
         graphics.clear()
+
+        // Create basic tiles
         for(let i = 0; i<Graphics.tileColors.length; i++) {
-
-            // Create background 
-            graphics.fillStyle(Graphics.tileColors[i], 1.0)
-            graphics.fillRect(x, y, Graphics.tileWidth, Graphics.tileHeight)
-            // Create border line
-            graphics.lineStyle(Graphics.tileBorder, Graphics.White, 1.0)
-            graphics.strokeRect(
-                x+1,
-                y+1,
-                Graphics.tileWidth - Graphics.tileBorder, 
-                Graphics.tileHeight - Graphics.tileBorder,
-            )
-            // Create inner border line
-            graphics.lineStyle(2, Graphics.White, 1.0)
-            graphics.strokeRect(
-                x + Graphics.tileBorder * 4,
-                y + Graphics.tileBorder * 4,
-                Graphics.tileWidth - Graphics.tileBorder * 8, 
-                Graphics.tileHeight - Graphics.tileBorder * 8,
-            )
-
+            Graphics.createTile(graphics, x, y, Graphics.tileColors[i])
             x += Graphics.tileWidth;
         }
 
-        // Generate circle for operations
-        graphics.fillStyle(Graphics.tileColorHilight, 1.0)
-        graphics.lineStyle(Graphics.opsBorder, Graphics.White, 1.0)
-        graphics.fillCircle(x+32, y+32, 28)
-        graphics.strokeCircle(x+32, y+32, 28)
+        // Create Special tiles
+        Graphics.createTile(graphics, x, y, Graphics.MediumSpringGreen)
+        x += Graphics.tileWidth
+        Graphics.createTile(graphics, x, y, Graphics.Jet)
+        x += Graphics.tileWidth
 
-        let totalFrames = Graphics.tileColors.length + Graphics.additionalSlots
-        graphics.generateTexture(Graphics.tileSheet, Graphics.tileWidth * totalFrames, Graphics.tileHeight)
+        // Generate Ops Button circles 
+        Graphics.createOpsButton(graphics, x, y, Graphics.LavenderWeb, Graphics.Black)
+        x += Graphics.tileWidth
+        Graphics.createOpsButton(graphics, x, y, Graphics.RedCrayola, Graphics.White)
+        x += Graphics.tileWidth
+        Graphics.createOpsButton(graphics, x, y, Graphics.Jet, Graphics.White)
+        x += Graphics.tileWidth
+        
+        // Unselected
+        graphics.generateTexture(Graphics.tileSheetKey, Graphics.tileWidth * Graphics.totalSheetCells, Graphics.tileHeight)
         graphics.clear()
 
         // Add frames to the sprite sheet
-        let texture = scene.textures.get(Graphics.tileSheet)
+        let texture = scene.textures.get(Graphics.tileSheetKey)
 
-        x=0
-        let i=0
-        for(; i<Graphics.tileColors.length; i++) {                
-            console.log(x)
-            x += Graphics.tileWidth;
+        x = 0
+        for(let i=0; i<Graphics.totalSheetCells; i++) {                
             texture.add(i, 0, x, 0, Graphics.tileWidth,Graphics.tileHeight)
+            x += Graphics.tileWidth;
         }
 
-        console.log(x,"final")
-
-        // Add opsCircile
-        texture.add(i, 0, x, 0, Graphics.tileWidth, Graphics.tileHeight)
-
-    }
+      }
 
     static debugTextures(scene: Phaser.Scene) {
-        for(let i = 0; i < scene.textures.get(Graphics.tileSheet).frameTotal; i++){
-            scene.add.sprite(100 + i * 64, 100 + i* 64, Graphics.tileSheet, i)
+        let x = 0
+        let y = 0 
+        for(let i = 0; i < scene.textures.get(Graphics.tileSheetKey).frameTotal; i++){
+            scene.add.sprite(50 + x, 50 + y, Graphics.tileSheetKey, i)
+            x += Graphics.tileWidth
+            if(x % 512 == 0) {
+                x = 0
+                y += Graphics.tileHeight
+            }
         }
+    }
 
+    static createOpsButton(graphics: Phaser.GameObjects.Graphics, x: integer, y: integer, color: number, borderColor: number) {
+        graphics.fillStyle(color, 1.0)
+        graphics.lineStyle(Graphics.opsBorder, borderColor, 1.0)
+        graphics.fillCircle(x+32, y+32, 28)
+        graphics.strokeCircle(x+32, y+32, 28)
+    }
+
+    static createTile(graphics: Phaser.GameObjects.Graphics, x: integer, y: integer, tileColor: number) {
+        // Create background 
+        graphics.fillStyle(tileColor, 1.0)
+        graphics.fillRect(x, y, Graphics.tileWidth, Graphics.tileHeight)
+        // Create border line
+        graphics.lineStyle(Graphics.tileBorder, Graphics.White, 1.0)
+        graphics.strokeRect(
+            x+1,
+            y+1,
+            Graphics.tileWidth - Graphics.tileBorder, 
+            Graphics.tileHeight - Graphics.tileBorder,
+        )
+        // Create inner border line
+        graphics.lineStyle(2, Graphics.White, 1.0)
+        graphics.strokeRect(
+            x + Graphics.tileBorder * 4,
+            y + Graphics.tileBorder * 4,
+            Graphics.tileWidth - Graphics.tileBorder * 8, 
+            Graphics.tileHeight - Graphics.tileBorder * 8,
+        )
     }
 
 }
