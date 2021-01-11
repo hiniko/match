@@ -1,8 +1,9 @@
 import GameEvents from "./Events";
 import GameBoard from "./GameBoard";
 import Tile from "./Tile";
-import { OpType, OpsButton } from "./OpsButton"
-import { Frames } from "./Graphics"
+import { OpType, OpsPanel} from "./OpsButton"
+import { Frames, Graphics } from "./Graphics"
+import { Layout, Position } from "./Types"
 
 export interface GameBoardDisplayConfig {
   scene: Phaser.Scene;
@@ -23,17 +24,18 @@ const UPDATING = "updating"
 const IDLE = "idle"
 
 const FALL_DURATION = 350
+const MAGIC_SPACING_BULLSHIT = 12
 
 export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   config: GameBoardDisplayConfig;
   events: GameEvents;
   scene: Phaser.Scene;
   tileGroup: Phaser.GameObjects.Group;
-  opsGroup: Phaser.GameObjects.Group;
+  panelGroup: Phaser.GameObjects.Group;
   timeline: Phaser.Tweens.Timeline;
   selectedTiles: Tile[] = []
   activeTiles: Tile[] = [];
-  activeOpsButtons: OpsButton[] = []
+  activePanels: OpsPanel[] = []
   container: Phaser.GameObjects.Container;
 
   objectPoolSize = 0
@@ -49,7 +51,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.config = config;
     this.events = GameEvents.get();
     this.tileGroup = new Phaser.GameObjects.Group(this.scene);
-    this.opsGroup = new Phaser.GameObjects.Group(this.scene)
+    this.panelGroup = new Phaser.GameObjects.Group(this.scene)
     this.container = new Phaser.GameObjects.Container(this.scene);
     this.timeline = this.scene.tweens.createTimeline();
 
@@ -98,11 +100,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
   private createOpsButtons() {
     for ( let i = 0; i < this.objectPoolSize; i++) {
-      this.opsGroup.add(new OpsButton({
-        scene: this.scene, 
-        type : OpType.Add,
-        defaultScale: 0.35
-      }))
+      this.panelGroup.add(new OpsPanel(this.scene))
     }
 
     // let button: OpsButton = this.opsGroup.getFirstDead()
@@ -358,39 +356,88 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     });
     this.enqueueAnim(slot);
   }
+ 
+  addOpsPannel(boardIdx: number, side: Position) {
+
+      let tile = this.activeTiles[boardIdx]
+      let panel: OpsPanel = this.panelGroup.getFirstDead()
+
+      let x:integer, y:integer
+      
+      switch(side) 
+      {
+        case Position.Top:
+          panel.reset(0,0, Layout.Horizontal)
+          x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT 
+          y = tile.container.y - (Graphics.tileHeight / 2)
+        break;
+
+        case Position.Right:
+          panel.reset(0,0, Layout.Vertical)
+          x = tile.container.x - (Graphics.tileWidth / 2)  + Graphics.tileWidth
+          y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
+        break;
+
+        case Position.Bottom:
+          panel.reset(0,0, Layout.Horizontal)
+          x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT
+          y = tile.container.y - (Graphics.tileHeight / 2) + Graphics.tileHeight
+        break;
+
+        case Position.Left:
+          panel.reset(0,0, Layout.Vertical)
+
+          x = tile.container.x - (Graphics.tileWidth / 2) 
+          y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
+        break;
+
+      }
+
+      panel.setPosition(x, y)
+      this.container.add(panel)
+  }
+
+  getSides(boardIdx:integer) : Position[] {
+    let prevIdx = this.selectedTiles[0].config.boardIndex;
+    let prevRow = Math.floor(prevIdx / this.config.gameBoard.config.width);
+    let row = this.config.gameBoard.getRow(boardIdx);
+
+    let width = this.config.gameBoard.config.width
+    let height = this.config.gameBoard.config.height
+
+    let selectedIdxs = this.selectedTiles.map((tile) => tile.config.boardIndex )
+
+
+    const top = boardIdx - width > 0 && selectedIdxs.includes(boardIdx - width) == false
+    const right = this.config.gameBoard.getRow(boardIdx + 1) == row && selectedIdxs.includes(boardIdx + 1) == false
+    const bottom = boardIdx + width < this.config.gameBoard.boardSize && selectedIdxs.includes(boardIdx + width) == false
+    const left = this.config.gameBoard.getRow(boardIdx - 1) == row && selectedIdxs.includes(boardIdx - 1) == false
+
+    let pos: Position[] = []
+    if(top) pos.push(Position.Top)
+    if(right) pos.push(Position.Right)
+    if(bottom) pos.push(Position.Bottom)
+    if(left) pos.push(Position.Left)
+    return pos
+  }
 
   onValidSelection(boardIdx: integer) {
 
-    this.selectedTiles.push(this.activeTiles[boardIdx])
-    this.activeTiles[boardIdx].setFrame(Frames.TileSelected);
-
+    let tile = this.activeTiles[boardIdx]
+    this.selectedTiles.push(tile)
+    tile.setFrame(Frames.TileSelected);
 
     let selIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == boardIdx)  
+   
+    // Add a ops panel if needed
+    if(selIdx > 0) {
+      let pos = this.getSides(boardIdx)
 
+      pos.forEach((pos) => {
+        this.addOpsPannel(boardIdx, pos)
+      }) 
+    }
 
-    // TODO: Need to finish ButtonGroup as that is element we want to be showing in this case
-    // Button group will handle the state of the op buttons
-    // if(selIdx > 0) {
-    //   let tile = this.activeTiles[boardIdx] 
-    //   let opsbutton: OpsButton = this.opsGroup.get();
-    //   this.container.add(opsbutton.container)
-    //   this.container.bringToTop(opsbutton.container)
-    //   opsbutton.container.alpha = 1;
-    //   opsbutton.container.setPosition(tile.container.x, tile.container.y)
-    //   opsbutton.setEnabled(true)
-
-    //   this.activeOpsButtons.push(opsbutton)
-
-    //   this.scene.tweens.add({
-    //     targets: opsbutton.container,
-    //     ease: "Back.easeOut",
-    //     duration: 250,
-    //     props: {
-    //       alpha: 1
-    //     }
-    //   })
-
-    // }
 
     this.scene.tweens.add({
       targets: [this.activeTiles[boardIdx].container],
