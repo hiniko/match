@@ -37,6 +37,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   activeTiles: Tile[] = [];
   activePanels: OpsPanel[] = []
   container: Phaser.GameObjects.Container;
+  opsSelection: Boolean = false
 
   objectPoolSize = 0
 
@@ -203,15 +204,14 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   onTileClicked(boardIdx: integer) {
     this.checkAnimations()
     if(this.state != IDLE) return
+    if(this.opsSelection) return
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
   onTilePointerOver(boardIdx: integer) {
-    console.log("mouse over " + boardIdx)
   }
 
   onTilePointerOut(boardIdx: integer) {
-    console.log("mouse out " + boardIdx)
   }
 
 
@@ -393,7 +393,15 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       }
 
+      this.scene.tweens.add({
+        targets: panel,
+        alpha: { from: 0, to: 1 },
+        ease: "Sine.In",
+        duration: 250,
+      })
+
       panel.setPosition(x, y)
+      panel.setEnabled(true)
       this.container.add(panel)
   }
 
@@ -403,10 +411,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     let row = this.config.gameBoard.getRow(boardIdx);
 
     let width = this.config.gameBoard.config.width
-    let height = this.config.gameBoard.config.height
 
     let selectedIdxs = this.selectedTiles.map((tile) => tile.config.boardIndex )
-
 
     const top = boardIdx - width > 0 && selectedIdxs.includes(boardIdx - width) == false
     const right = this.config.gameBoard.getRow(boardIdx + 1) == row && selectedIdxs.includes(boardIdx + 1) == false
@@ -436,6 +442,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       pos.forEach((pos) => {
         this.addOpsPannel(boardIdx, pos)
       }) 
+
+      this.opsSelection = true
     }
 
 

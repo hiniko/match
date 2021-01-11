@@ -10,10 +10,22 @@ export const TILE_TEXT_STYLE = {
   },
 };
 
-export const OPS_TEXT_STYLE = {
+export const OPS_TEXT_STYLE_INACTIVE = {
   fontFamily: "NunitoExtraBold",
   fontSize: "48px",
   color: "#000000",
+  // shadow: {
+  //   offsetX: 2,
+  //   offsetY: 2,
+  //   color: "#FFFFFF",
+  //   fill: true,
+  // },
+};
+
+export const OPS_TEXT_STYLE_SELECTED = {
+  fontFamily: "NunitoExtraBold",
+  fontSize: "48px",
+  color: "#FFFFFF",
   // shadow: {
   //   offsetX: 2,
   //   offsetY: 2,

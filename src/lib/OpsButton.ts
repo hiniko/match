@@ -1,6 +1,6 @@
 import GameEvents from "./Events";
 import { Frames, Graphics } from "./Graphics"
-import { OPS_TEXT_STYLE } from "./Styles";
+import { OPS_TEXT_STYLE_INACTIVE, OPS_TEXT_STYLE_SELECTED } from "./Styles";
 import { Layout } from "./types"
 
 const OPSBUTTON_RADIUS = 32
@@ -39,7 +39,7 @@ export class OpsButton extends Phaser.GameObjects.Container {
  
         this.sprite = new Phaser.GameObjects.Sprite(this.config.scene, 0, 0, Graphics.tileSheetKey)
         this.sprite.setFrame(Frames.Button)
-        this.text = new Phaser.GameObjects.Text(this.config.scene, 0, -4, "-", OPS_TEXT_STYLE)
+        this.text = new Phaser.GameObjects.Text(this.config.scene, 0, -4, "-", OPS_TEXT_STYLE_INACTIVE)
 
         this.text.setOrigin(0.5)
         this.sprite.setOrigin(0.5)
@@ -89,6 +89,16 @@ export class OpsButton extends Phaser.GameObjects.Container {
             case OpType.Add: return "+";
             case OpType.Subtract: return "-";
             default: return "??";
+        }
+    }
+
+    setSelected(selected: Boolean) {
+        if(selected) {
+            this.sprite.setFrame(Frames.ButtonSelected)
+            this.text.setStyle(OPS_TEXT_STYLE_SELECTED)
+        }else{
+            this.sprite.setFrame(Frames.ButtonInvalid)
+            this.text.setStyle(OPS_TEXT_STYLE_INACTIVE)
         }
     }
 
@@ -166,6 +176,7 @@ export class OpsPanel extends Phaser.GameObjects.Container {
 
         let bounds = this.getBounds()
         this.setSize(bounds.width, bounds.height)
+        this.alpha = 0
         
         this.setPosition(x, y)
         this.setActive(true)
@@ -173,6 +184,7 @@ export class OpsPanel extends Phaser.GameObjects.Container {
 
     setEnabled(enabled: boolean) {
         if(enabled) {
+            this.buttons.forEach(btn => btn.setEnabled(true))
             this.setActive(true)
             this.on(
                 Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN,
@@ -187,6 +199,7 @@ export class OpsPanel extends Phaser.GameObjects.Container {
                 this.onOpsButtonPointerOut,
                 this)
         }else{
+            this.buttons.forEach(btn => btn.setEnabled(false))
             this.removeAllListeners()
                 .setActive(false)
         }
@@ -198,7 +211,7 @@ export class OpsPanel extends Phaser.GameObjects.Container {
 
     onOpsButtonClicked(button: OpsButton) {
         if(!this.isInGroup(button)) return 
-        button.sprite.setFrame(Frames.ButtonSelected)
+        button.setSelected(true)
     }
 
     onOpsButtonPointerOver(button: OpsButton) {

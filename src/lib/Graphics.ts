@@ -70,7 +70,7 @@ static generateGraphics(scene: Phaser.Scene) {
         // Generate Ops Button circles 
         Graphics.createOpsButton(graphics, x, y, Graphics.LavenderWeb, Graphics.Black)
         x += Graphics.tileWidth
-        Graphics.createOpsButton(graphics, x, y, Graphics.RedCrayola, Graphics.White)
+        Graphics.createOpsButton(graphics, x, y, Graphics.BlueViolet, Graphics.White)
         x += Graphics.tileWidth
         Graphics.createOpsButton(graphics, x, y, Graphics.Jet, Graphics.White)
         x += Graphics.tileWidth
