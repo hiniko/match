@@ -175,6 +175,10 @@ export class OpsPanel extends Phaser.GameObjects.Container {
         this.alpha = 0
         this.scale = 1
 
+        this.buttons.forEach((btn) => {
+            btn.reset()
+        })
+
         this.setEnabled(true)
 
         let addButton = this.buttons[0]

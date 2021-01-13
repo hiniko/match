@@ -326,7 +326,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
             alpha: { value: 0 } ,
             scale: { value: 0 }
           },
-          delay: 10 * idx
+          delay: 50 * idx
         })
       })
 
