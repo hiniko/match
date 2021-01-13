@@ -198,9 +198,8 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onTileClicked(boardIdx: integer) {
-    this.checkAnimations()
     if(this.state != IDLE) return
-    if(this.opsSelection) return
+    if(this.opsSelection && !this.selectedTiles.includes(this.activeTiles[boardIdx])) return
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
@@ -320,17 +319,16 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     let panels = this.activePanels.concat(this.selectedPanels)
 
     panels.forEach((panel, idx)=> {
-      console.log(panel, idx)
         panel.setEnabled(false)
         slot.tweens.push({
           targets: panel,
-          duration: 50,
+          duration: 200,
           ease: "Back.easeInOut",
           props: {
             alpha: { value: 0 } ,
             scale: { value: 0 }
           },
-          delay: 50 * idx
+          delay: 30 * idx
         })
       })
 
@@ -353,7 +351,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       let selectedIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == dataIdx)
       this.selectedTiles.splice(0, selectedIdx + 1)
 
-      // Animate the tile
+      // Animate the tile away
       slot.tweens.push({
         targets: this.activeTiles[dataIdx].container,
         props: {
@@ -369,6 +367,44 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
           this.activeTiles[dataIdx].resetFrame();
         },
       });
+
+      // Animate the active panels away
+      this.activePanels.forEach((panel, idx)=> {
+        panel.setEnabled(false)
+        slot.tweens.push({
+          targets: panel,
+          duration: 200,
+          ease: "Back.easeInOut",
+          props: {
+            alpha: { value: 0 },
+            scale: { value: 0 }
+          },
+        })
+      })
+
+      // If we had selected an op, remove the first in the list
+      if(this.selectedPanels.length > 0 ) {
+        let lastSelectedPanel = this.selectedPanels.pop()
+        lastSelectedPanel.setEnabled(false)
+        slot.tweens.push({
+          targets: lastSelectedPanel,
+          duration: 200,
+          ease: "Back.easeInOut",
+          props: {
+            alpha: { value: 0 } ,
+            scale: { value: 0 }
+          },
+        })
+      }
+
+      // If this was the only tile we had selected remove it from the list
+      if(this.activePanels.length == 1) {
+        this.opsSelection = false
+      }
+
+      // Remove the tile from the selected list
+      this.selectedTiles.pop()
+      this.activePanels.length = 0
     });
 
     this.enqueueAnim(slot);
