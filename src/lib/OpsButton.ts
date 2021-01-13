@@ -275,7 +275,7 @@ export class OpsPanel extends Phaser.GameObjects.Container {
 
         // Get the other panels to hide
         GameEvents.get().emit(GameEvents.OPS_PANEL_HIDE, this.boardIdx);
-        GameEvents.get().emit(GameEvents.OPS_PANEL_SELECTED, this.neighbour)
+        GameEvents.get().emit(GameEvents.OPS_PANEL_SELECTED, this,  this.neighbour)
     }
 
     onOpsButtonPointerOver(button: OpsButton) {

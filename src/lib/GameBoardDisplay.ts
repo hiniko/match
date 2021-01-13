@@ -36,6 +36,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   selectedTiles: Tile[] = []
   activeTiles: Tile[] = [];
   activePanels: OpsPanel[] = []
+  selectedPanels: OpsPanel[] = []
   container: Phaser.GameObjects.Container;
   opsSelection: Boolean = false
 
@@ -316,7 +317,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       });
     });
 
-    this.activePanels.forEach((panel, idx)=> {
+    let panels = this.activePanels.concat(this.selectedPanels)
+
+    panels.forEach((panel, idx)=> {
+      console.log(panel, idx)
         panel.setEnabled(false)
         slot.tweens.push({
           targets: panel,
@@ -331,6 +335,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       })
 
     this.selectedTiles.length = 0
+    this.selectedPanels.length = 0
     this.activePanels.length = 0 
     this.opsSelection = false
 
@@ -410,7 +415,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       panel.setPosition(x, y)
       panel.setEnabled(true)
-      this.activePanels.unshift(panel)
+      this.activePanels.push(panel)
       this.container.add(panel)
   }
 
@@ -480,7 +485,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     });
   }
 
-  onOpsPanelSelected(neighbour: Neighbour) {
+  onOpsPanelSelected(panel: OpsPanel, neighbour: Neighbour) {
+    this.activePanels.length = 0
+    this.selectedPanels.unshift(panel)
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, neighbour.boardIdx)
   }
 }
