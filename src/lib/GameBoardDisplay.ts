@@ -1,9 +1,9 @@
 import GameEvents from "./Events";
 import GameBoard from "./GameBoard";
 import Tile from "./Tile";
-import { OpType, OpsPanel} from "./OpsButton"
+import { OpsPanel} from "./OpsButton"
 import { Frames, Graphics } from "./Graphics"
-import { Layout, Position } from "./Types"
+import { Layout, Neighbour, Position } from "./Types"
 
 export interface GameBoardDisplayConfig {
   scene: Phaser.Scene;
@@ -67,6 +67,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.events.on(GameEvents.TILE_CLICKED, this.onTileClicked, this)
     this.events.on(GameEvents.TILE_POINTER_OVER, this.onTilePointerOver, this)
     this.events.on(GameEvents.TILE_POINTER_OUT, this.onTilePointerOut, this)
+    this.events.on(GameEvents.OPS_PANEL_SELECTED, this.onOpsPanelSelected, this)
 
 
     let spaceKey = this.scene.input.keyboard.addKey("Space")
@@ -103,12 +104,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     for ( let i = 0; i < this.objectPoolSize; i++) {
       this.panelGroup.add(new OpsPanel(this.scene))
     }
-
-    // let button: OpsButton = this.opsGroup.getFirstDead()
-    // button.setEnabled(true)
-    // button.container.setPosition(0, 0)
-    // this.container.add(button.container)
-
   }
 
   assembleBoard() {
@@ -307,8 +302,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       tweens: []
     }
 
-    this.selectedTiles.length = 0
-
     acceptedIdxs.forEach((dataIdx: integer, selIdx: integer) => {
       this.activeTiles[dataIdx].setEnabled(false);
       slot.tweens.push({
@@ -322,6 +315,25 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         delay: 30 * selIdx,
       });
     });
+
+    this.activePanels.forEach((panel, idx)=> {
+        panel.setEnabled(false)
+        slot.tweens.push({
+          targets: panel,
+          duration: 50,
+          ease: "Back.easeInOut",
+          props: {
+            alpha: { value: 0 } ,
+            scale: { value: 0 }
+          },
+          delay: 10 * idx
+        })
+      })
+
+    this.selectedTiles.length = 0
+    this.activePanels.length = 0 
+    this.opsSelection = false
+
     this.enqueueAnim(slot);
   }
 
@@ -332,7 +344,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     }
 
     dataIdxs.forEach((dataIdx, idx) => {
-
       // Remove the tiles from selected
       let selectedIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == dataIdx)
       this.selectedTiles.splice(0, selectedIdx + 1)
@@ -354,43 +365,40 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         },
       });
     });
+
     this.enqueueAnim(slot);
   }
  
-  addOpsPannel(boardIdx: number, side: Position) {
-
+  addOpsPannel(boardIdx: number, neighbour: Neighbour) {
       let tile = this.activeTiles[boardIdx]
       let panel: OpsPanel = this.panelGroup.getFirstDead()
-
       let x:integer, y:integer
       
-      switch(side) 
+      switch(neighbour.side) 
       {
         case Position.Top:
-          panel.reset(0,0, Layout.Horizontal)
+          panel.reset(boardIdx, 0,0, Layout.Horizontal, neighbour)
           x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT 
           y = tile.container.y - (Graphics.tileHeight / 2)
         break;
 
         case Position.Right:
-          panel.reset(0,0, Layout.Vertical)
+          panel.reset(boardIdx, 0,0, Layout.Vertical, neighbour)
           x = tile.container.x - (Graphics.tileWidth / 2)  + Graphics.tileWidth
           y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
         break;
 
         case Position.Bottom:
-          panel.reset(0,0, Layout.Horizontal)
+          panel.reset(boardIdx, 0,0, Layout.Horizontal, neighbour)
           x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT
           y = tile.container.y - (Graphics.tileHeight / 2) + Graphics.tileHeight
         break;
 
         case Position.Left:
-          panel.reset(0,0, Layout.Vertical)
-
+          panel.reset(boardIdx, 0,0, Layout.Vertical, neighbour)
           x = tile.container.x - (Graphics.tileWidth / 2) 
           y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
         break;
-
       }
 
       this.scene.tweens.add({
@@ -402,28 +410,30 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
       panel.setPosition(x, y)
       panel.setEnabled(true)
+      this.activePanels.unshift(panel)
       this.container.add(panel)
   }
 
-  getSides(boardIdx:integer) : Position[] {
-    let prevIdx = this.selectedTiles[0].config.boardIndex;
-    let prevRow = Math.floor(prevIdx / this.config.gameBoard.config.width);
+  getSides(boardIdx:integer) : Neighbour[] {
     let row = this.config.gameBoard.getRow(boardIdx);
-
     let width = this.config.gameBoard.config.width
-
     let selectedIdxs = this.selectedTiles.map((tile) => tile.config.boardIndex )
+    let topIdx = boardIdx - width
+    let rightIdx = boardIdx + 1
+    let bottomIdx = boardIdx + width
+    let leftIdx = boardIdx - 1
+    let pos: Neighbour[] = []
 
-    const top = boardIdx - width > 0 && selectedIdxs.includes(boardIdx - width) == false
-    const right = this.config.gameBoard.getRow(boardIdx + 1) == row && selectedIdxs.includes(boardIdx + 1) == false
-    const bottom = boardIdx + width < this.config.gameBoard.boardSize && selectedIdxs.includes(boardIdx + width) == false
-    const left = this.config.gameBoard.getRow(boardIdx - 1) == row && selectedIdxs.includes(boardIdx - 1) == false
+    const top = topIdx > 0 && selectedIdxs.includes(topIdx) == false
+    const right = this.config.gameBoard.getRow(rightIdx) == row && selectedIdxs.includes(rightIdx) == false
+    const bottom = bottomIdx< this.config.gameBoard.boardSize && selectedIdxs.includes(bottomIdx) == false
+    const left = this.config.gameBoard.getRow(leftIdx) == row && selectedIdxs.includes(leftIdx) == false
 
-    let pos: Position[] = []
-    if(top) pos.push(Position.Top)
-    if(right) pos.push(Position.Right)
-    if(bottom) pos.push(Position.Bottom)
-    if(left) pos.push(Position.Left)
+    if(top) pos.push({ side: Position.Top, boardIdx: topIdx})
+    if(right) pos.push({ side: Position.Right, boardIdx: rightIdx})
+    if(bottom) pos.push({ side: Position.Bottom, boardIdx: bottomIdx})
+    if(left) pos.push({ side: Position.Left, boardIdx: leftIdx})
+
     return pos
   }
 
@@ -433,19 +443,13 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.selectedTiles.push(tile)
     tile.setFrame(Frames.TileSelected);
 
-    let selIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == boardIdx)  
-   
-    // Add a ops panel if needed
-    if(selIdx > 0) {
-      let pos = this.getSides(boardIdx)
+    let near: Neighbour[] = this.getSides(boardIdx)
 
-      pos.forEach((pos) => {
-        this.addOpsPannel(boardIdx, pos)
-      }) 
+    near.forEach((side) => {
+      this.addOpsPannel(boardIdx, side)
+    }) 
 
-      this.opsSelection = true
-    }
-
+    this.opsSelection = true
 
     this.scene.tweens.add({
       targets: [this.activeTiles[boardIdx].container],
@@ -474,5 +478,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         this.activeTiles[boardIdx].resetFrame();
       },
     });
+  }
+
+  onOpsPanelSelected(neighbour: Neighbour) {
+    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, neighbour.boardIdx)
   }
 }

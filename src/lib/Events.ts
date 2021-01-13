@@ -52,6 +52,8 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
 
   static OPS_BUTTON_CLICKED = "opsButtonClicked"
   static OPS_BUTTON_POINTER_OVER = "opsbuttonOver"
-  static OPS_BUTTON_POINTER_OUT= "opsbuttonOut"
+  static OPS_BUTTON_POINTER_OUT = "opsbuttonOut"
+  static OPS_PANEL_HIDE = "opsPanelHide"
+  static OPS_PANEL_SELECTED = "opsPanelSelected"
 
 }

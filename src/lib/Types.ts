@@ -5,6 +5,11 @@ export enum Position{
     Left
 }
 
+export class Neighbour {
+   side :Position 
+   boardIdx: integer
+}
+
 export enum Layout {
     Vertical,
     Horizontal
