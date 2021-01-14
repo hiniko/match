@@ -469,7 +469,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         slot.tweens.push({
           targets: panel,
           ease: "Sine.In",
-          duration: 50,
+          duration: 100,
           props: {
             alpha: { value: 1 },
             scale: { value: 1 }
@@ -491,9 +491,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     let leftIdx = boardIdx - 1
     let pos: Neighbour[] = []
 
-    const top = topIdx > 0 && selectedIdxs.includes(topIdx) == false
+    const top = topIdx >= 0 && selectedIdxs.includes(topIdx) == false
     const right = this.config.gameBoard.getRow(rightIdx) == row && selectedIdxs.includes(rightIdx) == false
-    const bottom = bottomIdx< this.config.gameBoard.boardSize && selectedIdxs.includes(bottomIdx) == false
+    const bottom = bottomIdx < this.config.gameBoard.boardSize && selectedIdxs.includes(bottomIdx) == false
     const left = this.config.gameBoard.getRow(leftIdx) == row && selectedIdxs.includes(leftIdx) == false
 
     if(top) pos.push({ side: Position.Top, boardIdx: topIdx})
