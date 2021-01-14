@@ -9,7 +9,14 @@
             "request": "launch",
             "name": "Launch Chrome against localhost",
             "url": "http://localhost:10001/index-dev.html",
-            "webRoot": "${workspaceFolder}"
+            "webRoot": "${workspaceFolder}",
+            "sourceMapPathOverrides": {
+              "webpack:///./*": "${webRoot}/*",
+              "webpack:///lib/*": "${webRoot}/lib/*",
+              "webpack:///*": "*",
+              "webpack:///./~/*": "${webRoot}/node_modules/*",
+            }
+
         }
     ]
 }

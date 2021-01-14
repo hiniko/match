@@ -198,8 +198,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onTileClicked(boardIdx: integer) {
+    let isPrevSelected = this.selectedTiles.includes(this.activeTiles[boardIdx])
     if(this.state != IDLE) return
-    if(this.opsSelection && !this.selectedTiles.includes(this.activeTiles[boardIdx])) return
+    if(this.opsSelection && isPrevSelected == false) return
     this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
   }
 
@@ -347,13 +348,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     }
 
     dataIdxs.forEach((dataIdx, idx) => {
-      // Remove the tiles from selected
-      let selectedIdx = this.selectedTiles.findIndex((tile) => tile.config.boardIndex == dataIdx)
-      this.selectedTiles.splice(0, selectedIdx + 1)
-
+      let tile = this.selectedTiles.pop()
       // Animate the tile away
       slot.tweens.push({
-        targets: this.activeTiles[dataIdx].container,
+        targets: tile.container,
         props: {
           alpha: { value: 0.85 },
           scale: { value: 0.9 },
@@ -368,24 +366,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         },
       });
 
-      // Animate the active panels away
-      this.activePanels.forEach((panel, idx)=> {
-        panel.setEnabled(false)
-        slot.tweens.push({
-          targets: panel,
-          duration: 200,
-          ease: "Back.easeInOut",
-          props: {
-            alpha: { value: 0 },
-            scale: { value: 0 }
-          },
-        })
-      })
 
       // If we had selected an op, remove the first in the list
       if(this.selectedPanels.length > 0 ) {
         let lastSelectedPanel = this.selectedPanels.pop()
-        lastSelectedPanel.setEnabled(false)
         slot.tweens.push({
           targets: lastSelectedPanel,
           duration: 200,
@@ -394,25 +378,48 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
             alpha: { value: 0 } ,
             scale: { value: 0 }
           },
+          onComplete(tween, targets: OpsPanel[], ...params) {
+            targets[0].setEnabled(false)
+          }
         })
       }
 
-      // If this was the only tile we had selected remove it from the list
-      if(this.activePanels.length == 1) {
-        this.opsSelection = false
-      }
-
-      // Remove the tile from the selected list
-      this.selectedTiles.pop()
-      this.activePanels.length = 0
     });
 
+    // Animate the active panels away
+    this.activePanels.forEach((panel, idx)=> {
+      panel.setEnabled(false)
+      slot.tweens.push({
+        targets: panel,
+        duration: 200,
+        ease: "Back.easeInOut",
+        props: {
+          alpha: { value: 0 },
+          scale: { value: 0 }
+        },
+      })
+    })
+
     this.enqueueAnim(slot);
+
+    this.activePanels.length = 0
+
+    console.log(this.selectedTiles)
+    console.log(this.activePanels)
+
+    if(this.selectedTiles.length == 0) {
+      this.opsSelection = false
+    }else {
+      this.addOpsPanelsForTile(this.selectedTiles[this.selectedTiles.length -1].config.boardIndex)
+    }
+
+    console.log(this.activePanels)
+
   }
  
   addOpsPannel(boardIdx: number, neighbour: Neighbour) {
       let tile = this.activeTiles[boardIdx]
-      let panel: OpsPanel = this.panelGroup.getFirstDead()
+      let panel: OpsPanel = this.panelGroup.getLast()
       let x:integer, y:integer
       
       switch(neighbour.side) 
@@ -442,15 +449,23 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
         break;
       }
 
-      this.scene.tweens.add({
-        targets: panel,
-        alpha: { from: 0, to: 1 },
-        ease: "Sine.In",
-        duration: 250,
-      })
-
       panel.setPosition(x, y)
       panel.setEnabled(true)
+
+      let slot: AnimationSlot = {
+        blocking: false,
+        tweens: [{
+          targets: panel,
+          ease: "Sine.In",
+          duration: 50,
+          props: {
+            alpha: { value: 1 },
+            scale: { value: 1 }
+          }}]
+      }
+
+      this.enqueueAnim(slot)
+
       this.activePanels.push(panel)
       this.container.add(panel)
   }
@@ -475,7 +490,19 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     if(bottom) pos.push({ side: Position.Bottom, boardIdx: bottomIdx})
     if(left) pos.push({ side: Position.Left, boardIdx: leftIdx})
 
+    console.log(pos)
+
     return pos
+  }
+
+  addOpsPanelsForTile(boardIdx: integer) {
+    let near: Neighbour[] = this.getSides(boardIdx)
+
+    near.forEach((side) => {
+      this.addOpsPannel(boardIdx, side)
+    }) 
+
+    this.opsSelection = true
   }
 
   onValidSelection(boardIdx: integer) {
@@ -484,13 +511,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.selectedTiles.push(tile)
     tile.setFrame(Frames.TileSelected);
 
-    let near: Neighbour[] = this.getSides(boardIdx)
-
-    near.forEach((side) => {
-      this.addOpsPannel(boardIdx, side)
-    }) 
-
-    this.opsSelection = true
+    this.addOpsPanelsForTile(boardIdx)
 
     this.scene.tweens.add({
       targets: [this.activeTiles[boardIdx].container],
@@ -498,7 +519,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       ease: "Back.easeInOut",
       duration: 250,
       yoyo: true
-
     });
   }
 
