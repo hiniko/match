@@ -210,7 +210,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   onTilePointerOut(boardIdx: integer) {
   }
 
-
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
 
     if(this.state != IDLE) {
@@ -365,15 +364,19 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
           this.activeTiles[dataIdx].resetFrame();
         },
       });
+    });
 
+    // Remove all of the ops related to the tiles
+    if(this.selectedPanels.length > 0 ) {
 
-      // If we had selected an op, remove the first in the list
-      if(this.selectedPanels.length > 0 ) {
-        let lastSelectedPanel = this.selectedPanels.pop()
+      let panels = this.selectedPanels.splice(0, dataIdxs.length)
+
+      panels.forEach((panel, idx) => {
         slot.tweens.push({
-          targets: lastSelectedPanel,
+          targets: panel,
           duration: 200,
           ease: "Back.easeInOut",
+          delay: 50 * idx,
           props: {
             alpha: { value: 0 } ,
             scale: { value: 0 }
@@ -382,9 +385,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
             targets[0].setEnabled(false)
           }
         })
-      }
+      })
 
-    });
+    }
 
     // Animate the active panels away
     this.activePanels.forEach((panel, idx)=> {
@@ -417,57 +420,65 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
   }
  
-  addOpsPannel(boardIdx: number, neighbour: Neighbour) {
+  addOpsPannels(boardIdx: number, neighbours: Neighbour[]) {
       let tile = this.activeTiles[boardIdx]
-      let panel: OpsPanel = this.panelGroup.getLast()
       let x:integer, y:integer
-      
-      switch(neighbour.side) 
-      {
-        case Position.Top:
-          panel.reset(boardIdx, 0,0, Layout.Horizontal, neighbour)
-          x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT 
-          y = tile.container.y - (Graphics.tileHeight / 2)
-        break;
-
-        case Position.Right:
-          panel.reset(boardIdx, 0,0, Layout.Vertical, neighbour)
-          x = tile.container.x - (Graphics.tileWidth / 2)  + Graphics.tileWidth
-          y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
-        break;
-
-        case Position.Bottom:
-          panel.reset(boardIdx, 0,0, Layout.Horizontal, neighbour)
-          x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT
-          y = tile.container.y - (Graphics.tileHeight / 2) + Graphics.tileHeight
-        break;
-
-        case Position.Left:
-          panel.reset(boardIdx, 0,0, Layout.Vertical, neighbour)
-          x = tile.container.x - (Graphics.tileWidth / 2) 
-          y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
-        break;
-      }
-
-      panel.setPosition(x, y)
-      panel.setEnabled(true)
 
       let slot: AnimationSlot = {
         blocking: false,
-        tweens: [{
+        tweens: []
+      }
+
+      neighbours.forEach((neighbour: Neighbour) =>{
+
+        let panel: OpsPanel = this.panelGroup.getLast()
+        switch(neighbour.side) 
+        {
+          case Position.Top:
+            panel.reset(boardIdx, 0,0, Layout.Horizontal, neighbour)
+            x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT 
+            y = tile.container.y - (Graphics.tileHeight / 2)
+          break;
+
+          case Position.Right:
+            panel.reset(boardIdx, 0,0, Layout.Vertical, neighbour)
+            x = tile.container.x - (Graphics.tileWidth / 2)  + Graphics.tileWidth
+            y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
+          break;
+
+          case Position.Bottom:
+            panel.reset(boardIdx, 0,0, Layout.Horizontal, neighbour)
+            x = tile.container.x - (Graphics.tileWidth / 2) + ((Graphics.tileWidth - panel.width) / 2) + MAGIC_SPACING_BULLSHIT
+            y = tile.container.y - (Graphics.tileHeight / 2) + Graphics.tileHeight
+          break;
+
+          case Position.Left:
+            panel.reset(boardIdx, 0,0, Layout.Vertical, neighbour)
+            x = tile.container.x - (Graphics.tileWidth / 2) 
+            y = tile.container.y - (Graphics.tileHeight / 2) + ((Graphics.tileHeight- panel.height) / 2) + MAGIC_SPACING_BULLSHIT
+          break;
+
+        }
+
+        panel.setPosition(x, y)
+        panel.setEnabled(true)
+
+        this.activePanels.push(panel)
+        this.container.add(panel)
+
+        slot.tweens.push({
           targets: panel,
           ease: "Sine.In",
           duration: 50,
           props: {
             alpha: { value: 1 },
             scale: { value: 1 }
-          }}]
-      }
+          }
+        })
+      })
+
 
       this.enqueueAnim(slot)
-
-      this.activePanels.push(panel)
-      this.container.add(panel)
   }
 
   getSides(boardIdx:integer) : Neighbour[] {
@@ -498,9 +509,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   addOpsPanelsForTile(boardIdx: integer) {
     let near: Neighbour[] = this.getSides(boardIdx)
 
-    near.forEach((side) => {
-      this.addOpsPannel(boardIdx, side)
-    }) 
+    this.addOpsPannels(boardIdx, near)
 
     this.opsSelection = true
   }
