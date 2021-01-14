@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "rollup --config rollup.config.dev.js",
         "build": "rollup --config rollup.config.dist.js",
-        "watch": "rollup --watch --config rollup.config.dev.js"
+        "watch": "rollup --watch --config rollup.config.dev-watch.js"
     },
     "repository": {
         "type": "git",
