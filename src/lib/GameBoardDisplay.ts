@@ -1,7 +1,7 @@
 import GameEvents from "./Events";
 import GameBoard from "./GameBoard";
 import Tile from "./Tile";
-import { OpsPanel} from "./OpsButton"
+import { OpsPanel, OpType} from "./OpsButton"
 import { Frames, Graphics } from "./Graphics"
 import { Layout, Neighbour, Position } from "./Types"
 
@@ -62,6 +62,10 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.events.on(GameEvents.LOGIC_UNSELECTION, this.onUnselection, this);
     this.events.on(GameEvents.LOGIC_BOARD_UPDATED, this.onBoardUpdated, this);
     this.events.on(GameEvents.LOGIC_CLEAR_SELECTION, this.onClearSelection, this);
+    this.events.on(GameEvents.LOGIC_ACCEPT_SOLUTION, this.onAcceptSolution, this)
+    this.events.on(GameEvents.LOGIC_REJECT_SOLUTION, this.onRejectSolution, this)
+    this.events.on(GameEvents.LOGIC_NEW_TARGET, this.onTargetUpdated, this)
+
 
     this.events.on(GameEvents.BOARD_UPDATE_ANIMATIONS, this.checkAnimations, this);
 
@@ -77,10 +81,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.objectPoolSize = 
       this.config.gameBoard.boardSize + Math.floor(this.config.gameBoard.boardSize / 2)
 
+    ;
     this.createTiles();
     this.createOpsButtons()
-
-    this.assembleBoard();
     this.setState(IDLE);
   }
 
@@ -201,13 +204,25 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     let isPrevSelected = this.selectedTiles.includes(this.activeTiles[boardIdx])
     if(this.state != IDLE) return
     if(this.opsSelection && isPrevSelected == false) return
-    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx)
+    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, boardIdx, null)
   }
 
   onTilePointerOver(boardIdx: integer) {
   }
 
   onTilePointerOut(boardIdx: integer) {
+  }
+
+  onTargetUpdated(target: integer) {
+    console.log("Target Updated. Now: " + target)
+  }
+
+  onAcceptSolution() {
+    console.log("Solution Aceppted!")
+  }
+
+  onRejectSolution() {
+    console.log("Solution Rejected")
   }
 
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
@@ -515,7 +530,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onValidSelection(boardIdx: integer) {
-
     let tile = this.activeTiles[boardIdx]
     this.selectedTiles.push(tile)
     tile.setFrame(Frames.TileSelected);
@@ -550,9 +564,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     });
   }
 
-  onOpsPanelSelected(panel: OpsPanel, neighbour: Neighbour) {
+  onOpsPanelSelected(panel: OpsPanel, neighbour: Neighbour, op: OpType) {
     this.activePanels.length = 0
     this.selectedPanels.unshift(panel)
-    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, neighbour.boardIdx)
+    this.events.emit(GameEvents.LOGIC_UPDATE_SELECTION, neighbour.boardIdx, op)
   }
 }

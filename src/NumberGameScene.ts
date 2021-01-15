@@ -46,8 +46,10 @@ export default class NumbersGame extends Phaser.Scene {
 
         const boardOffsetX = (width - (Graphics.tileWidth * this.board.config.width) +(Graphics.tilePadding * (this.board.config.width -1))) / 2
         this.boardDisplay.setPosition(boardOffsetX, 300);
-
         this.add.existing(this.boardDisplay.container)
+
+        this.board.popluate()
+        this.boardDisplay.assembleBoard()
 
     //     this.add.shader('RGB Shift Field', 0, 0, 800, 600).setOrigin(0);
     //     this.add.image(400, 300, 'libs');

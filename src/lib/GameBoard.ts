@@ -1,4 +1,5 @@
 import GameEvents from "./Events";
+import { OpType } from "./OpsButton"
 
 export interface GameBoardConfig {
   scene: Phaser.Scene;
@@ -15,16 +16,17 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
   // Perhaps Data manager is the way to go here?
   scene: Phaser.Scene;
   boardSize: integer;
-  boardData: integer[] = [];
-  currentMaxValue: integer;
+  boardData: integer[] = []
+  currentOps: OpType[] = []
+  currentMaxValue: integer
+  currentTargetValue: integer
+  currentAccepted: integer = 0
 
   constructor(config: GameBoardConfig) {
-    super(config.scene, "Gameboard Logic");
+    super(config.scene, "Gameboard Logic")
     this.config = config;
     this.currentMaxValue = config.startingMaxValue;
     this.boardSize = config.width * config.height;
-
-    this.popluate();
 
     this.events.on(
       GameEvents.LOGIC_UPDATE_SELECTION,
@@ -46,11 +48,21 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     for (var j = 0; j < this.boardSize; j++) {
       this.boardData[j] = this.getRandomValue();
     }
+
+    this.newTargetValue()
   }
 
   /*
    * Helpers
    */
+
+  newTargetValue() {
+    this.currentAccepted++
+    this.currentMaxValue += Math.round(Math.log(this.currentAccepted) + this.currentAccepted)
+    this.currentTargetValue = Math.round(Math.random() * this.currentMaxValue + 1)
+    console.log("BOARD", this.currentMaxValue, this.currentTargetValue)
+    this.events.emit(GameEvents.LOGIC_NEW_TARGET, this.currentTargetValue)
+  }
 
   getRandomValue(): integer {
     return Math.floor(Math.random() * this.currentMaxValue) + 1;
@@ -64,11 +76,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     return dataIdx % Math.floor(this.boardSize / this.config.height);
   }
 
-  /*
-   * Event Handlers
-   */ 
-
-  onAcceptSelection() {
+  updateBoard() {
     let dropData = [];
 
     // Find which columns need to move
@@ -130,22 +138,75 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     this.events.emit(GameEvents.LOGIC_BOARD_UPDATED, dropData, newData);
 
     this.selected.length = 0;
+    this.currentOps.length = 0
   }
 
-  onUpdateSelection(dataIdx) {
+  /*
+   * Event Handlers
+   */ 
+
+  onAcceptSelection() {
+    // Check answer 
+
+    let selected = this.selected.reverse()
+    let ops = this.currentOps.reverse()
+
+    let result = this.boardData[selected[0]]
+
+    console.log(selected)
+    console.log(ops)
+
+    // Start from idx 1 as we have already added the first item 
+    for(let i =1; i < selected.length; i++){
+
+      let cell = selected[i]
+      let op = ops[i-1]
+      let num = this.boardData[cell]
+
+      switch(op)  {
+        case OpType.Add:
+          console.log(result + " + " + num + " = " + (result + num))
+          result = result + num
+          break
+        case OpType.Subtract:
+          console.log(result + " - " + num + " = " + (result - num))
+          result = result - num
+          break
+      }
+      
+    }
+
+    console.log("Final result = " + result)
+
+    if(result != this.currentTargetValue) {
+      this.events.emit(GameEvents.LOGIC_REJECT_SOLUTION)
+      return 
+    }
+
+    this.events.emit(GameEvents.LOGIC_ACCEPT_SOLUTION)
+
+    // Update current max value
+    this.newTargetValue()
+
+    // Update board and notify 
+    this.updateBoard()
+  }
+
+  onUpdateSelection(dataIdx: integer, opType: OpType) {
+    console.log("Got " + opType)
     // If this is a unselection
     let foundIdx = this.selected.findIndex((selIdx: integer) => selIdx == dataIdx)
     if(foundIdx > -1) {
       // Remove the elements from the array and emit and event with the removed selections
-      GameEvents.get().emit(
-        GameEvents.LOGIC_UNSELECTION,
-        this.selected.splice(0, foundIdx + 1)
-      );
+      this.currentOps.splice(0, foundIdx)
+      let unselected = this.selected.splice(0, foundIdx + 1)
+      GameEvents.get().emit( GameEvents.LOGIC_UNSELECTION, unselected); 
+      console.log("deselect", this.currentOps)
       return
     }
 
     // If there were no previous selections 
-    if (this.selected.length == 0) {
+    if (opType == null) {
       this.selected.unshift(dataIdx);
       GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx);
       return
@@ -163,8 +224,10 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     const down = dataIdx + this.config.width == prevIdx;
 
     if (left || right || up || down) {
+      this.currentOps.unshift(opType)
       this.selected.unshift(dataIdx);
       GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx);
+      console.log("selection updated", this.currentOps)
     } else {
       GameEvents.get().emit(GameEvents.LOGIC_INVALID_SELECTION, dataIdx);
     }

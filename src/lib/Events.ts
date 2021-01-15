@@ -42,6 +42,9 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
   static LOGIC_BOARD_UPDATED = "logicTilesUpdated"
   static LOGIC_ACCEPT_SELECTION = "logicAcceptSelection"
   static LOGIC_CLEAR_SELECTION = "logicClearSelection"
+  static LOGIC_ACCEPT_SOLUTION = "logicAcceptSolution"
+  static LOGIC_REJECT_SOLUTION = "logicRejectSolution"
+  static LOGIC_NEW_TARGET = "logicNewTarget"
 
   static BOARD_UPDATE_ANIMATIONS = "boardUpdateAnimations"
   static BOARD_ACCEPT_SELECTION = "boardUpdateSelection"
