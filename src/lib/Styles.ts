@@ -33,3 +33,27 @@ export const OPS_TEXT_STYLE_SELECTED = {
   //   fill: true,
   // },
 };
+
+export const UI_TEXT_STYLE_TARGET= {
+  fontFamily: "NunitoExtraBold",
+  fontSize: "48px",
+  color: "#FFFFFF",
+  // shadow: {
+  //   offsetX: 2,
+  //   offsetY: 2,
+  //   color: "#FFFFFF",
+  //   fill: true,
+  // },
+};
+
+export const UI_TEXT_STYLE_OPERATIONS= {
+  fontFamily: "NunitoExtraBold",
+  fontSize: "48px",
+  color: "#FFFFFF",
+  // shadow: {
+  //   offsetX: 2,
+  //   offsetY: 2,
+  //   color: "#FFFFFF",
+  //   fill: true,
+  // },
+};

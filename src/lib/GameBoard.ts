@@ -200,7 +200,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     // If there were no previous selections 
     if (opType == null) {
       this.selected.unshift(dataIdx);
-      GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx);
+      GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx, this.boardData[dataIdx], null);
       return
     }
 
@@ -218,7 +218,7 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     if (left || right || up || down) {
       this.currentOps.unshift(opType)
       this.selected.unshift(dataIdx);
-      GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx);
+      GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx, this.boardData[dataIdx], opType);
     } else {
       GameEvents.get().emit(GameEvents.LOGIC_INVALID_SELECTION, dataIdx);
     }

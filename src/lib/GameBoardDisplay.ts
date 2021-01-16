@@ -431,8 +431,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
       this.addOpsPanelsForTile(this.selectedTiles[this.selectedTiles.length -1].config.boardIndex)
     }
 
-    console.log(this.activePanels)
-
   }
  
   addOpsPannels(boardIdx: number, neighbours: Neighbour[]) {
