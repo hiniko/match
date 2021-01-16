@@ -10,7 +10,7 @@ const config = {
     backgroundColor: '#000000',
     expandParent: true,
     width: 720,
-    height: 1280,
+    height: 900,
     resolution: window.devicePixelRatio, 
     scene: NumberGameScene,
     plugins: { 

@@ -36,7 +36,7 @@ export const OPS_TEXT_STYLE_SELECTED = {
 
 export const UI_TEXT_STYLE_TARGET= {
   fontFamily: "NunitoExtraBold",
-  fontSize: "48px",
+  fontSize: "62px",
   color: "#FFFFFF",
   // shadow: {
   //   offsetX: 2,
@@ -48,7 +48,7 @@ export const UI_TEXT_STYLE_TARGET= {
 
 export const UI_TEXT_STYLE_OPERATIONS= {
   fontFamily: "NunitoExtraBold",
-  fontSize: "48px",
+  fontSize: "32px",
   color: "#FFFFFF",
   // shadow: {
   //   offsetX: 2,

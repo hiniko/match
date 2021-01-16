@@ -56,7 +56,7 @@ export default class NumbersGame extends Phaser.Scene {
 
         this.gameUI.setPosition(
             (this.cameras.main.width / 2) - (this.gameUI.config.width / 2),
-            (this.cameras.main.height / 2) - 400)
+            (this.cameras.main.height / 2) - 200)
 
         this.add.existing(this.boardDisplay.container)
         this.add.existing(this.gameUI)
