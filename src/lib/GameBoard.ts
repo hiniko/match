@@ -179,6 +179,8 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     console.log("Final result = " + result)
 
     if(result != this.currentTargetValue) {
+      this.currentOps.length = 0
+      this.selected.length = 0
       this.events.emit(GameEvents.LOGIC_REJECT_SOLUTION)
       return 
     }
@@ -193,7 +195,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
   }
 
   onUpdateSelection(dataIdx: integer, opType: OpType) {
-    console.log("Got " + opType)
     // If this is a unselection
     let foundIdx = this.selected.findIndex((selIdx: integer) => selIdx == dataIdx)
     if(foundIdx > -1) {
@@ -201,7 +202,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
       this.currentOps.splice(0, foundIdx)
       let unselected = this.selected.splice(0, foundIdx + 1)
       GameEvents.get().emit( GameEvents.LOGIC_UNSELECTION, unselected); 
-      console.log("deselect", this.currentOps)
       return
     }
 
@@ -227,7 +227,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
       this.currentOps.unshift(opType)
       this.selected.unshift(dataIdx);
       GameEvents.get().emit(GameEvents.LOGIC_VALID_SELECTION, dataIdx);
-      console.log("selection updated", this.currentOps)
     } else {
       GameEvents.get().emit(GameEvents.LOGIC_INVALID_SELECTION, dataIdx);
     }

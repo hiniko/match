@@ -222,7 +222,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
   }
 
   onRejectSolution() {
-    console.log("Solution Rejected")
+    this.onUnselection(this.selectedTiles.map(tile => tile.config.boardIndex), true)
   }
 
   onBoardUpdated(dropData: integer[][], newData: integer[][]) {
@@ -355,7 +355,7 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.enqueueAnim(slot);
   }
 
-  onUnselection(dataIdxs: integer[]) {
+  onUnselection(dataIdxs: integer[], rejection: Boolean = false) {
     let slot: AnimationSlot = {
       blocking: true,
       tweens: []
@@ -363,6 +363,9 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
 
     dataIdxs.forEach((dataIdx, idx) => {
       let tile = this.selectedTiles.pop()
+      if(rejection) {
+        tile.setFrame(Frames.TileError)
+      }
       // Animate the tile away
       slot.tweens.push({
         targets: tile.container,
@@ -421,9 +424,6 @@ export default class GameBoardDisplay extends Phaser.GameObjects.GameObject {
     this.enqueueAnim(slot);
 
     this.activePanels.length = 0
-
-    console.log(this.selectedTiles)
-    console.log(this.activePanels)
 
     if(this.selectedTiles.length == 0) {
       this.opsSelection = false

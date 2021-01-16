@@ -6,6 +6,7 @@ export enum Frames {
     TileColor4,
     TileSelected,
     TileInvalid,
+    TileError,
     Button,
     ButtonSelected,
     ButtonInvalid,
@@ -65,6 +66,8 @@ static generateGraphics(scene: Phaser.Scene) {
         Graphics.createTile(graphics, x, y, Graphics.MediumSpringGreen)
         x += Graphics.tileWidth
         Graphics.createTile(graphics, x, y, Graphics.Jet)
+        x += Graphics.tileWidth
+        Graphics.createTile(graphics, x, y, Graphics.RedCrayola)
         x += Graphics.tileWidth
 
         // Generate Ops Button circles 
