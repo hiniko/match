@@ -22,7 +22,6 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
   }
 
   checkDeferred() {
-    console.log("Checking for deferred events")
     if(this.deferred.length < 1) return;
     let event = this.deferred.pop()
     console.warn("Calling deferred event:" + event.name)

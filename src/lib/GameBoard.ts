@@ -60,7 +60,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
     this.currentAccepted++
     this.currentMaxValue += Math.round(Math.log(this.currentAccepted) + this.currentAccepted)
     this.currentTargetValue = Math.round(Math.random() * this.currentMaxValue + 1)
-    console.log("BOARD", this.currentMaxValue, this.currentTargetValue)
     this.events.emit(GameEvents.LOGIC_NEW_TARGET, this.currentTargetValue)
   }
 
@@ -153,9 +152,6 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
     let result = this.boardData[selected[0]]
 
-    console.log(selected)
-    console.log(ops)
-
     // Start from idx 1 as we have already added the first item 
     for(let i =1; i < selected.length; i++){
 
@@ -165,18 +161,14 @@ export default class GameBoard extends Phaser.GameObjects.GameObject {
 
       switch(op)  {
         case OpType.Add:
-          console.log(result + " + " + num + " = " + (result + num))
           result = result + num
           break
         case OpType.Subtract:
-          console.log(result + " - " + num + " = " + (result - num))
           result = result - num
           break
       }
       
     }
-
-    console.log("Final result = " + result)
 
     if(result != this.currentTargetValue) {
       this.currentOps.length = 0
