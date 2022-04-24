@@ -13,6 +13,17 @@ export enum Frames {
     __Length
 }
 
+
+export enum FrameSymbols {
+  "🥎",
+  "🏈",
+  "🎱", 
+  "🏓",
+  "🛹",
+  "🪀"
+}
+
+
 export class Graphics {
 
 

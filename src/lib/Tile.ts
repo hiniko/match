@@ -1,4 +1,5 @@
 import GameEvents from "./Events";
+import { FrameSymbols } from "./Graphics";
 import { TILE_TEXT_STYLE } from "./Styles";
 
 interface TileConfig {
@@ -43,14 +44,14 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.container = new Phaser.GameObjects.Container(this.scene);
     this.container.setSize(config.tileWidth, config.tileHeight);
 
-    this.currentSpriteFrame = this.randomSpriteFrame();
+    this.currentSpriteFrame = config.value
     this.sprite = this.scene.make.sprite({
       key: this.config.spriteKey,
       frame: this.currentSpriteFrame,
     });
 
     this.text = new Phaser.GameObjects.Text(this.scene, 0, 0, "-", TILE_TEXT_STYLE);
-    this.text.setScale(0.5)
+    this.text.setScale(1)
     this.text.setOrigin(0.5);
     this.text.setText("?");
 
@@ -72,8 +73,8 @@ export default class Tile extends Phaser.GameObjects.GameObject {
     this.container.setPosition(x, y);
     this.container.alpha = 1
     this.container.scale = 1
-    this.text.setText(value.toString());
-    this.sprite.setFrame(this.randomSpriteFrame())
+    this.text.setText(FrameSymbols[value]);
+    this.sprite.setFrame(value)
   }
 
   setPosition(x: integer, y: integer) {

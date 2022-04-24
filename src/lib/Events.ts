@@ -34,28 +34,14 @@ export default class GameEvents extends Phaser.Events.EventEmitter {
     return super.emit(event, ...args)
   }
 
-  static LOGIC_UPDATE_SELECTION = "logicUpdateSelection"
-  static LOGIC_UNSELECTION = "logicUnselection"
-  static LOGIC_VALID_SELECTION = "logicValidSelection"
-  static LOGIC_INVALID_SELECTION = "logicInvalidSelection"
-  static LOGIC_BOARD_UPDATED = "logicTilesUpdated"
-  static LOGIC_ACCEPT_SELECTION = "logicAcceptSelection"
-  static LOGIC_CLEAR_SELECTION = "logicClearSelection"
-  static LOGIC_ACCEPT_SOLUTION = "logicAcceptSolution"
-  static LOGIC_REJECT_SOLUTION = "logicRejectSolution"
-  static LOGIC_NEW_TARGET = "logicNewTarget"
+  static LOGIC_BOARD_UPDATED      = "logicTilesUpdated"
 
-  static BOARD_UPDATE_ANIMATIONS = "boardUpdateAnimations"
-  static BOARD_ACCEPT_SELECTION = "boardUpdateSelection"
+  static BOARD_UPDATE_ANIMATIONS  = "boardUpdateAnimations"
+  static BOARD_ACCEPT_SELECTION   = "boardUpdateSelection"
+  static BOARD_TILE_SELECTED      = "boardTileSelected"
 
-  static TILE_CLICKED = "tileClicked"
-  static TILE_POINTER_OVER= "tilePointerOver"
-  static TILE_POINTER_OUT = "tilePointerOut"
-
-  static OPS_BUTTON_CLICKED = "opsButtonClicked"
-  static OPS_BUTTON_POINTER_OVER = "opsbuttonOver"
-  static OPS_BUTTON_POINTER_OUT = "opsbuttonOut"
-  static OPS_PANEL_HIDE = "opsPanelHide"
-  static OPS_PANEL_SELECTED = "opsPanelSelected"
+  static TILE_CLICKED             = "tileClicked"
+  static TILE_POINTER_OVER        = "tilePointerOver"
+  static TILE_POINTER_OUT         = "tilePointerOut"
 
 }

@@ -32,7 +32,7 @@ export default class NumbersGame extends Phaser.Scene {
              scene: this, 
              width: 8, 
              height: 6, 
-             startingMaxValue: 10
+             maxTileTypes: 3
         })
 
         this.boardDisplay = new GameBoardDisplay({
