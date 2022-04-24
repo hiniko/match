@@ -1,9 +1,9 @@
-# Numbers
-_A simple maths game_
+# Match 
+_A simple match 3 game_
 
 
 # Play it online!
-https://numbers.shermanrose.uk
+https://match.shermanrose.uk
 
 # Building yourself 
 
